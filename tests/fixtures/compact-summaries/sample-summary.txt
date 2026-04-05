@@ -1,0 +1,5 @@
+The user and I discussed the architecture for the new microservices platform. We decided to use PostgreSQL as the primary database and Redis for caching. The convention is to use kebab-case for all API endpoints and camelCase for TypeScript variables. The API versioning approach is URL path prefix /api/v1/.
+
+A significant bug-lesson emerged: the webhook handler had a race condition. The root cause was missing lock acquisition before processing concurrent events. The fix was adding a mutex around the processing function.
+
+The constraint is that we must always use spaces for indentation, never tabs. This is mandatory across all repositories.

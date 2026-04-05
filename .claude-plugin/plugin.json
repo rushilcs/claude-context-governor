@@ -1,0 +1,11 @@
+{
+  "name": "claude-context-governor",
+  "version": "0.1.0",
+  "description": "Memory governance for Claude Code — selective, explainable, conflict-safe memory restoration with audit trail",
+  "author": {
+    "name": "Rushil CS"
+  },
+  "repository": "https://github.com/rushilcs/claude-context-governor",
+  "license": "MIT",
+  "keywords": ["memory", "governance", "context", "compaction", "audit"]
+}

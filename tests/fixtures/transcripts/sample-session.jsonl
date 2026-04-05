@@ -1,0 +1,8 @@
+{"type":"message","message":{"role":"user","content":"What database should we use for this project?"}}
+{"type":"message","message":{"role":"assistant","content":"After evaluating the options, I've decided to use PostgreSQL for the main database. It has great JSON support and excellent TypeScript integration via Prisma."}}
+{"type":"message","message":{"role":"user","content":"What about the API versioning?"}}
+{"type":"message","message":{"role":"assistant","content":"We'll use URL path prefix for API versioning. The convention is /api/v1/ as the base. This is the standard we follow across all our services."}}
+{"type":"message","message":{"role":"user","content":"I'm getting an error with the webhook handler"}}
+{"type":"message","message":{"role":"assistant","content":"The issue was a race condition in the webhook handler. The root cause was that we weren't acquiring a lock before processing concurrent webhook events. Fixed by adding a mutex lock around the processing function."}}
+{"type":"message","message":{"role":"user","content":"Any formatting rules?"}}
+{"type":"message","message":{"role":"assistant","content":"We must always use 2-space indentation. Never use tabs. This is a hard requirement for the codebase."}}

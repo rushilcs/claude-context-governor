@@ -1,0 +1,35 @@
+{
+  "name": "claude-context-governor",
+  "version": "0.1.0",
+  "description": "Memory governance for Claude Code — selective, explainable, conflict-safe memory restoration",
+  "type": "module",
+  "license": "MIT",
+  "author": "Rushil CS",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rushilcs/claude-context-governor"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:simulation": "vitest run --project simulation",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.0"
+  }
+}

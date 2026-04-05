@@ -1,0 +1,5 @@
+{
+  "name": "context-governor-spike",
+  "version": "0.0.1",
+  "description": "M0 validation spike for claude-context-governor. Tests hook I/O, additionalContext injection, transcript readability, and compact_summary capture."
+}
