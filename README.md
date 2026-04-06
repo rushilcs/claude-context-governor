@@ -166,6 +166,55 @@ Works out of the box with sensible defaults. There is no runtime config file yet
 | `confidenceThreshold` | 0.3 | Minimum confidence to accept an extracted item |
 | `experimentalCategories` | false | Enable open-question, command-recipe, work-in-progress categories |
 
+## Direct Database Access
+
+All data lives in a single SQLite file. The default location is:
+
+```
+~/.claude/plugins/data/claude-context-governor-<hash>/governor.db
+```
+
+You can query it directly with `sqlite3`:
+
+```bash
+# Find your database
+DB=$(ls ~/.claude/plugins/data/claude-context-governor-*/governor.db 2>/dev/null | head -1)
+
+# List all active memory items
+sqlite3 "$DB" "SELECT id, category, content FROM memory_items WHERE status='active' ORDER BY created_at DESC"
+
+# See what was restored in the last session
+sqlite3 "$DB" "SELECT action, reason FROM audit_entries WHERE session_id = (SELECT session_id FROM sessions ORDER BY started_at DESC LIMIT 1) AND action IN ('loaded','skipped') ORDER BY timestamp"
+
+# Show conflict history
+sqlite3 "$DB" "SELECT mi.content, cr.description, cr.resolution FROM conflict_records cr JOIN memory_items mi ON cr.memory_item_id = mi.id ORDER BY cr.detected_at DESC LIMIT 10"
+
+# Count items by status
+sqlite3 "$DB" "SELECT status, COUNT(*) FROM memory_items GROUP BY status"
+
+# Count items by category (active only)
+sqlite3 "$DB" "SELECT category, COUNT(*) FROM memory_items WHERE status='active' GROUP BY category"
+
+# View all sessions
+sqlite3 "$DB" "SELECT session_id, started_at, items_extracted, items_restored, compaction_count FROM sessions ORDER BY started_at DESC"
+
+# Full audit trail for a session (replace SESSION_ID)
+sqlite3 "$DB" "SELECT timestamp, action, reason FROM audit_entries WHERE session_id='SESSION_ID' ORDER BY timestamp"
+
+# Find pinned items
+sqlite3 "$DB" "SELECT id, content FROM memory_items WHERE pinned=1"
+```
+
+### Tables
+
+| Table | What it stores |
+|-------|---------------|
+| `memory_items` | Extracted memories with category, confidence, status, pinned flag |
+| `sessions` | Session metadata: start time, extraction/restore counts, compaction count |
+| `audit_entries` | Every load, skip, reject, extract, pin, dismiss, revive action |
+| `conflict_records` | Detected conflicts: source rule, description, resolution |
+| `active_instruction_files` | Which CLAUDE.md / .claude/rules/ files were active per session |
+
 ## Key Design Decisions
 
 | Aspect | Approach | Why |
