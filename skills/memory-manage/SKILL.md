@@ -7,7 +7,7 @@ Manage memory item lifecycle: pin, dismiss, revive, or mark as stale.
 When the user invokes `/memory-manage`, followed by an action and item ID, run:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-manage.js "${PWD}" <action> <item-id>
+node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-manage.js <action> <item-id>
 ```
 
 Supported actions:

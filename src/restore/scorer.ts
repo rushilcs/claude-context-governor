@@ -60,11 +60,16 @@ function computeRecencyScore(createdAt: string, recencyDays: number): number {
   return Math.exp(-ageDays / (recencyDays * 0.5));
 }
 
+// File relevance scoring is implemented but not yet wired into runtime restore.
+// SessionStart input does not provide a recent-files list, so recentFiles is
+// always [] at runtime, yielding the neutral baseline (0.3). The overlap-based
+// scoring path below activates only when callers explicitly pass recentFiles
+// (currently unit tests only). Wiring this up is a post-MVP enhancement.
 function computeFileRelevance(
   itemFiles: string[],
   recentFiles: string[],
 ): number {
-  if (itemFiles.length === 0 || recentFiles.length === 0) return 0.3;
+  if (!itemFiles || !recentFiles || itemFiles.length === 0 || recentFiles.length === 0) return 0.3;
 
   const recentSet = new Set(recentFiles);
   const overlap = itemFiles.filter((f) => recentSet.has(f)).length;

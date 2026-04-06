@@ -7,7 +7,7 @@ Generate an audit report of memory governance decisions.
 When the user invokes `/memory-audit`, optionally followed by a session ID, run:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-audit.js "${PWD}" [session-id]
+node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-audit.js [session-id]
 ```
 
 If no session ID is provided, it generates a project-wide report. If a session ID is given, it generates a session-specific audit report showing:

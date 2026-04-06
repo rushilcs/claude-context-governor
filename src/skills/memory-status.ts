@@ -4,11 +4,7 @@ import { statSync } from "node:fs";
 import { join } from "node:path";
 
 function main() {
-  const projectDir = process.argv[2];
-  if (!projectDir) {
-    console.log("Usage: memory-status <project-dir>");
-    process.exit(1);
-  }
+  const projectDir = process.argv[2] || process.cwd();
 
   const db = getDatabase();
 

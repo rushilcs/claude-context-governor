@@ -2,17 +2,10 @@ import { getDatabase, closeDatabase } from "../store/database.js";
 import { searchItems } from "../store/memory-items.js";
 
 function main() {
-  const projectDir = process.argv[2];
-  const query = process.argv[3];
+  const projectDir = process.cwd();
+  const query = process.argv[2];
 
-  if (!projectDir) {
-    console.log(
-      'Usage: memory-search <project-dir> "<query>" [--category=<cat>] [--status=<status>] [--limit=<n>]',
-    );
-    process.exit(1);
-  }
-
-  const args = process.argv.slice(4);
+  const args = process.argv.slice(3);
   let category: string | undefined;
   let status: string | undefined;
   let limit = 20;

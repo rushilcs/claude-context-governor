@@ -1,21 +1,23 @@
 # claude-context-governor
 
-**Memory governance for Claude Code** — selective, explainable, conflict-safe memory restoration with full audit trail.
+> **Status**: Early MVP / prototype. Automated tests pass (60/60). Manual Claude Code validation pending -- see [validation checklist](tests/e2e/VALIDATION.md).
 
-Claude Code already has memory. But should it remember *everything*? `claude-context-governor` is a Claude Code plugin that captures decisions, detects conflicts with project rules, and proves every restore decision.
+**Memory governance for Claude Code** — selective, explainable, conflict-checked memory restoration with audit trail.
+
+Claude Code already has memory. But should it remember *everything*? `claude-context-governor` is a Claude Code plugin that extracts structured candidate memories from transcripts and compaction summaries, checks them against project instructions, and restores selected items on session start.
 
 ## The Problem
 
-Claude Code loses context after compaction and across sessions. The naive fix — dump everything back in — causes context bloat, stale information, and invisible drift from project rules. There's no way to know *what* was loaded, *why*, or whether it contradicts your `CLAUDE.md`.
+Claude Code loses context after compaction and across sessions. The naive fix — dump everything back in — causes context bloat, stale information, and invisible drift from project rules. There is no built-in mechanism to inspect what context was restored or why, or whether it contradicts your `CLAUDE.md`.
 
 ## What This Does
 
 `claude-context-governor` intercepts Claude Code's session and compaction lifecycle to provide **governed memory**:
 
-1. **Capture** — Extracts structured memory items from session transcripts and compaction summaries
+1. **Capture** — Extracts structured candidate memories from assistant messages in session transcripts and from compaction summaries
 2. **Classify** — Categorizes items as decisions, constraints, conventions, or bug lessons
 3. **Conflict-check** — Detects contradictions between memory items and your `CLAUDE.md` / `.claude/rules/`
-4. **Restore selectively** — Scores items by recency, confidence, and relevance within a token budget
+4. **Restore selectively** — Scores items by recency, confidence, and category priority within a token budget
 5. **Audit everything** — Every load, skip, and rejection is logged with reasoning and token cost
 
 ## Key Differentiator
@@ -88,7 +90,7 @@ claude --plugin-dir /path/to/claude-context-governor
 
 ## Conflict Detection
 
-When Claude produces a memory item that contradicts your project rules, the governor catches it:
+When a candidate memory item contradicts your project rules, the governor's heuristic detector catches it:
 
 ```
 Memory extracted: "Use tabs for indentation"
@@ -106,7 +108,7 @@ Every decision is traceable:
 ## Summary
 - Extracted: 8
 - Loaded: 5
-- Skipped: 2 (low relevance)
+- Skipped: 2 (low score / budget full)
 - Rejected: 1 (conflict with CLAUDE.md)
 - Token cost: 1,847 / 2,000
 
@@ -133,10 +135,10 @@ The governor uses sensible defaults. Key settings:
 ## Architecture
 
 - **Storage**: SQLite via `better-sqlite3` in `${CLAUDE_PLUGIN_DATA}/governor.db`
-- **Hooks**: SessionStart, PreCompact, PostCompact, Stop, SessionEnd, InstructionsLoaded
-- **Extraction**: Pattern-based classification from transcripts and compaction summaries
+- **Hooks**: SessionStart (restore), PreCompact (extract), PostCompact (extract), InstructionsLoaded (rule tracking), Stop (session tracking), SessionEnd (no-op due to timeout)
+- **Extraction**: Pattern-based classification from assistant messages in transcripts and from compaction summaries
 - **Deduplication**: SHA-256 fingerprint of normalized content + category
-- **Conflict detection**: Keyword overlap + polarity/value analysis against loaded instruction files
+- **Conflict detection**: Heuristic keyword overlap + polarity/value-pair analysis against project instruction files
 
 ## Development
 

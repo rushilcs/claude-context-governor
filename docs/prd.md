@@ -28,14 +28,14 @@ Not "persistent memory." The market has tools that save context. The differentia
 
 ### Core Capabilities
 
-1. **Capture** state at PreCompact, PostCompact, Stop, SessionStart, SessionEnd, InstructionsLoaded
+1. **Capture** state at PreCompact, PostCompact, and InstructionsLoaded hooks. SessionStart performs restore (not capture). Stop ensures session tracking. SessionEnd is a no-op due to hard timeout constraints.
 2. **Extract** atomic memory items from two sources:
-   - Session transcripts (via PreCompact hook)
+   - Assistant messages in session transcripts (via PreCompact hook)
    - Compaction summaries (via PostCompact hook)
 3. **Classify** into 4 core categories: decision, constraint, convention, bug-lesson
 4. **Store** with full provenance: source session, timestamp, related files, confidence, memory source, fingerprint
 5. **Detect conflicts** between memory candidates and loaded CLAUDE.md / `.claude/rules/` files
-6. **Restore selectively** at SessionStart using relevance scoring + configurable token budget
+6. **Restore selectively** at SessionStart using recency/confidence/category scoring + configurable token budget
 7. **Audit** every decision: what was loaded, skipped, rejected, and why
 8. **User lifecycle controls**: pin, dismiss, revive, fingerprint-based dedup
 
@@ -74,7 +74,7 @@ Rationale: this is a governance layer, not a notes dump. Fewer, higher-quality m
 
 ## Success Criteria
 
-1. A developer can install the plugin, work through a session with compaction, and see governed memory restored in the next session -- without any manual action.
+1. A developer can install the plugin, work through a session with compaction, and see governed memory restored in the next session -- without any manual action beyond plugin installation. (Target behavior; requires manual Claude Code validation to confirm.)
 2. The audit report clearly shows what was loaded, what was rejected (with conflict reason), and token budget used.
 3. A conflict between a memory candidate and CLAUDE.md is detected and handled (rejected or flagged).
 4. SessionStart restore completes in <3 seconds.

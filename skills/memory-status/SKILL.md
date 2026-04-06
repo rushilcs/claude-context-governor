@@ -4,10 +4,10 @@ Show current memory governance status for this project.
 
 ## Instructions
 
-When the user invokes `/memory-status`, run the governor status script:
+When the user invokes `/memory-status`, run:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-status.js "${PWD}"
+node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-status.js
 ```
 
 Display the output to the user. It shows:

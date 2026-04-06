@@ -9,12 +9,12 @@ import {
 import { logAudit } from "../audit/logger.js";
 
 function main() {
-  const projectDir = process.argv[2];
-  const action = process.argv[3];
-  const itemId = process.argv[4];
+  const projectDir = process.cwd();
+  const action = process.argv[2];
+  const itemId = process.argv[3];
 
-  if (!projectDir || !action || !itemId) {
-    console.log("Usage: memory-manage <project-dir> <action> <item-id>");
+  if (!action || !itemId) {
+    console.log("Usage: memory-manage <action> <item-id>");
     console.log("Actions: pin, dismiss, revive, stale");
     process.exit(1);
   }

@@ -13,8 +13,8 @@ claude-context-governor is a Claude Code plugin composed of hooks (for automatic
 | on-session-start | SessionStart | Restore: query, score, serialize, inject via additionalContext | Sync (critical path) | <3s target |
 | on-pre-compact | PreCompact | Capture: read transcript, extract memory items | Async-safe (not user-blocking) | <60s timeout |
 | on-post-compact | PostCompact | Capture: extract from compact_summary | Async-safe | <5s |
-| on-stop | Stop | Snapshot: save last_assistant_message, lightweight stale-check | Async-safe | <2s |
-| on-session-end | SessionEnd | Finalize: update session record, increment counters | Sync (hard timeout) | <1.5s |
+| on-stop | Stop | Session tracking: ensures session record exists. Turn snapshot and stale-check are planned but not yet implemented. | Async-safe | <2s |
+| on-session-end | SessionEnd | No-op. The 1.5s hard timeout prevents meaningful work; all session tracking is handled by other hooks. | Sync (hard timeout) | <1.5s |
 | on-instructions-loaded | InstructionsLoaded | Track: record which rule files are active | Async (fire-and-forget) | <100ms |
 
 ### Skills (user-invoked)
@@ -31,14 +31,14 @@ claude-context-governor is a Claude Code plugin composed of hooks (for automatic
 | Module | Responsibility |
 |--------|---------------|
 | store/database | SQLite connection, schema init, migrations |
-| extract/extractor | Accept text (from transcript or compact_summary), run pattern extraction |
+| extract/extractor | Accept text (from assistant messages in transcript, or compact_summary), run pattern extraction |
 | extract/classifier | Assign category + confidence |
 | extract/fingerprint | Compute SHA-256 fingerprint for dedup |
 | extract/patterns | Regex/phrase patterns per category |
 | conflict/detector | Check memory candidates against instruction fragments |
 | conflict/instruction-parser | Parse CLAUDE.md and .claude/rules/ files into fragments |
 | restore/selector | Query + score + budget-constrain memory items |
-| restore/scorer | Scoring functions: recency, confidence, category, file relevance |
+| restore/scorer | Scoring functions: recency, confidence, category priority. File relevance scoring is implemented but not wired into runtime (see Startup Path section) |
 | restore/serializer | Format selected items as structured Markdown |
 | audit/logger | Write AuditEntry records |
 | audit/reporter | Generate Markdown + JSON reports |
@@ -55,7 +55,8 @@ claude-context-governor is a Claude Code plugin composed of hooks (for automatic
                            │                                             │
  InstructionsLoaded ──────►│  Record active rule files ──► SQLite        │
                            │                                             │
- PreCompact ──────────────►│  Read transcript ──► Extract ──► Classify   │
+ PreCompact ──────────────►│  Read transcript (assistant msgs only) ──►  │
+                           │  Extract ──► Classify                       │
                            │  ──► Fingerprint ──► Conflict Check ──►     │
                            │  ──► Store in SQLite                        │
                            │                                             │
@@ -63,9 +64,11 @@ claude-context-governor is a Claude Code plugin composed of hooks (for automatic
                            │  Classify ──► Fingerprint ──► Conflict      │
                            │  Check ──► Store in SQLite                  │
                            │                                             │
- Stop ────────────────────►│  Save turn snapshot ──► SQLite              │
+ Stop ────────────────────►│  Ensure session record ──► SQLite            │
+                           │  (snapshot + stale-check: planned, not yet  │
+                           │   implemented)                              │
                            │                                             │
- SessionEnd ──────────────►│  Finalize session record ──► SQLite         │
+ SessionEnd ──────────────►│  No-op (hard 1.5s timeout)                  │
                            └─────────────────────────────────────────────┘
 
                            ┌─────────────────────────────────────────────┐
@@ -101,8 +104,8 @@ claude-context-governor is a Claude Code plugin composed of hooks (for automatic
 | SessionStart | Only reliable injection point for restoring memory into Claude's context via additionalContext |
 | PreCompact | Access to transcript_path for full extraction before context is compressed |
 | PostCompact | Access to compact_summary -- a complementary extraction source already distilled by Claude |
-| Stop | Non-blocking point to save turn state and run lightweight maintenance |
-| SessionEnd | Finalize session records; must be fast due to 1.5s default timeout |
+| Stop | Non-blocking point for session tracking. Turn state snapshot and stale-item maintenance are planned for a future milestone. |
+| SessionEnd | Registered but currently a no-op due to the hard 1.5s timeout. All meaningful session tracking happens in other hooks. |
 | InstructionsLoaded | Tracks which CLAUDE.md and .claude/rules/ files are actually loaded, including conditional rules. Directly feeds conflict detection with authoritative rule set. Lightweight (just record a file path). |
 
 ### Evaluated and Deferred
@@ -111,7 +114,7 @@ claude-context-governor is a Claude Code plugin composed of hooks (for automatic
 
 Fires when Claude executes `cd` to change directory. Could enable directory-scoped memory (different memories for `src/frontend/` vs `src/backend/`).
 
-**Why deferred**: MVP already captures `project_dir` from SessionStart's `cwd` field, which is sufficient for project-level scoping. Directory-level granularity adds complexity to scoring (need to decide how to weight memories from parent vs child directories) with marginal value for most projects. The scoring system already uses `related_files` for file-level relevance.
+**Why deferred**: MVP already captures `project_dir` from SessionStart's `cwd` field, which is sufficient for project-level scoping. Directory-level granularity adds complexity to scoring (need to decide how to weight memories from parent vs child directories) with marginal value for most projects. Note: the scorer has file relevance logic implemented, but it is not wired into runtime because SessionStart input does not provide a recent-files list. File relevance scoring is a post-MVP enhancement.
 
 **When to add**: post-MVP, when supporting multi-project workspaces or monorepo subdirectory scoping.
 
@@ -145,7 +148,7 @@ Total: well under 3s for any reasonable memory store size. The bottleneck would 
 - No transcript parsing (happens in PreCompact)
 - No extraction (happens in PreCompact/PostCompact)
 - No conflict detection (happens at extraction time)
-- No stale-item cleanup (deferred to Stop hook)
+- No stale-item cleanup (deferred to a future milestone)
 - No fingerprint computation (happens at extraction time)
 - No file system reads beyond SQLite (no transcript reading, no CLAUDE.md reading)
 
@@ -178,14 +181,17 @@ Location: `${CLAUDE_PLUGIN_DATA}/governor.db`
 - Active instruction files (from InstructionsLoaded records in ActiveInstructionFile table)
 
 ### Process
-1. Query ActiveInstructionFile for the current session to get file paths
-2. Read each file from disk, parse into instruction fragments (one per line/bullet)
-3. For each memory candidate, scan instruction fragments for contradictions:
-   - **Polarity conflict**: opposing keywords ("always X" vs "never X", "must" vs "must not")
-   - **Value conflict**: same topic, different values ("use spaces" vs "use tabs", "use PostgreSQL" vs "use MySQL")
+
+Conflict detection is **heuristic-based**, designed as an MVP safeguard rather than semantic reasoning. It catches common contradictions (polarity inversions, known technology alternatives) but may miss subtle or context-dependent conflicts.
+
+1. Query ActiveInstructionFile for the current session to get file paths (falls back to scanning `CLAUDE.md` and `.claude/rules/*.md` from disk if the table is empty)
+2. Read each file from disk, parse into instruction fragments (one per non-empty line/bullet)
+3. For each memory candidate, extract keywords (with stop-word filtering) and scan instruction fragments for contradictions:
+   - **Polarity conflict**: negation mismatch on overlapping keywords (threshold: keyword overlap >= 0.25). E.g., memory says "use tabs" but instruction says "never use tabs."
+   - **Value conflict**: 8 hardcoded technology-alternative pairs (tabs/spaces, MySQL/PostgreSQL, REST/GraphQL, jest/vitest, npm/pnpm, yarn/pnpm, SQL/ORM, monorepo/single-package). Triggered when memory mentions one value and instruction mentions the opposing value.
 4. Assign conflict severity:
-   - **Hard conflict** (clear contradiction with CLAUDE.md): memory item status = `rejected`
-   - **Soft conflict** (ambiguous overlap with rules): memory item remains `active`, ConflictRecord created for user review via /memory-audit
+   - **Hard conflict** (keyword overlap >= 0.4 or any value-pair match): memory item status = `rejected`
+   - **Soft conflict** (polarity conflict with overlap 0.25-0.4): memory item remains `active`, ConflictRecord created for user review via /memory-audit
 
 ### Principle
 CLAUDE.md and .claude/rules/ always win. They are explicit, versioned, team-owned project instructions. Memory items are automatically extracted with imperfect heuristics. When they conflict, the project instructions are authoritative.

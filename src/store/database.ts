@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { mkdirSync, existsSync } from "node:fs";
@@ -9,13 +9,37 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 let _db: Database.Database | null = null;
 
 function getDbPath(): string {
-  const dataDir =
-    process.env.CLAUDE_PLUGIN_DATA ||
-    join(process.env.HOME || "~", ".claude-context-governor");
-  if (!existsSync(dataDir)) {
-    mkdirSync(dataDir, { recursive: true });
+  if (process.env.CLAUDE_PLUGIN_DATA) {
+    const dir = process.env.CLAUDE_PLUGIN_DATA;
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    return join(dir, "governor.db");
   }
-  return join(dataDir, "governor.db");
+
+  // Skills don't receive CLAUDE_PLUGIN_DATA. Search Claude's plugin data dirs.
+  const pluginDataBase = join(
+    process.env.HOME || "~",
+    ".claude",
+    "plugins",
+    "data",
+  );
+  if (existsSync(pluginDataBase)) {
+    try {
+      const matches = readdirSync(pluginDataBase)
+        .filter((d) => d.startsWith("claude-context-governor"))
+        .map((d) => join(pluginDataBase, d, "governor.db"))
+        .filter((p) => existsSync(p));
+      if (matches.length > 0) return matches[0];
+    } catch {
+      // fall through
+    }
+  }
+
+  const fallbackDir = join(
+    process.env.HOME || "~",
+    ".claude-context-governor",
+  );
+  if (!existsSync(fallbackDir)) mkdirSync(fallbackDir, { recursive: true });
+  return join(fallbackDir, "governor.db");
 }
 
 export function getDatabase(): Database.Database {

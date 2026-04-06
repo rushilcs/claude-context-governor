@@ -130,6 +130,48 @@ export function generateProjectReport(
       );
     }
   }
+  lines.push("");
+
+  const conflicts = db
+    .prepare(
+      `SELECT cr.*, mi.content, mi.category
+       FROM conflict_records cr
+       LEFT JOIN memory_items mi ON cr.memory_item_id = mi.id
+       WHERE mi.project_dir = ?
+       ORDER BY cr.detected_at DESC
+       LIMIT 10`,
+    )
+    .all(projectDir) as Array<{
+    id: string;
+    memory_item_id: string;
+    conflict_source: string;
+    conflict_source_path: string | null;
+    description: string;
+    resolution: string;
+    detected_at: string;
+    content: string | null;
+    category: string | null;
+  }>;
+
+  if (conflicts.length > 0) {
+    lines.push("## Conflicts Detected");
+    for (const c of conflicts) {
+      const preview = c.content
+        ? c.content.length > 60
+          ? c.content.slice(0, 57) + "..."
+          : c.content
+        : `[${c.memory_item_id.slice(0, 8)}]`;
+      lines.push(
+        `- **${c.resolution}** [${c.category}] ${preview}`,
+      );
+      lines.push(
+        `  Source: ${c.conflict_source}${c.conflict_source_path ? ` (${c.conflict_source_path})` : ""} — ${c.description}`,
+      );
+    }
+  } else {
+    lines.push("## Conflicts Detected");
+    lines.push("- (none)");
+  }
 
   return lines.join("\n");
 }

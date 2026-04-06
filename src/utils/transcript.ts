@@ -32,13 +32,31 @@ export function parseTranscriptText(text: string): TranscriptMessage[] {
   for (const line of lines) {
     try {
       const entry = JSON.parse(line) as TranscriptEntry;
-      if (entry.message && typeof entry.message.content === "string") {
-        messages.push({
-          role: entry.message.role || "assistant",
-          content: entry.message.content,
-          timestamp: (entry.timestamp as string) || undefined,
-          tool_calls: entry.message.tool_calls,
-        });
+
+      if (entry.message) {
+        const msg = entry.message;
+        let contentStr: string | undefined;
+
+        if (typeof msg.content === "string") {
+          contentStr = msg.content;
+        } else if (Array.isArray(msg.content)) {
+          // Claude Code stores content as [{type:"text", text:"..."}, ...]
+          const textParts = (msg.content as Array<Record<string, unknown>>)
+            .filter((block) => block.type === "text" && typeof block.text === "string")
+            .map((block) => block.text as string);
+          if (textParts.length > 0) {
+            contentStr = textParts.join("\n");
+          }
+        }
+
+        if (contentStr && contentStr.length > 0) {
+          messages.push({
+            role: msg.role || "assistant",
+            content: contentStr,
+            timestamp: (entry.timestamp as string) || undefined,
+            tool_calls: msg.tool_calls,
+          });
+        }
       } else if (entry.type === "text" && typeof entry.content === "string") {
         messages.push({
           role: (entry.role as "user" | "assistant") || "assistant",
