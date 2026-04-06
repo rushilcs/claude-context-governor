@@ -1,6 +1,6 @@
 # Publish Readiness Assessment
 
-Last updated: 2026-04-05
+Last updated: 2026-04-06
 
 ## What Is Truly Working Now
 
@@ -54,18 +54,25 @@ The simulation tests (Tier 2) exercise the same code paths that hooks call, usin
 
 These are necessary but not sufficient. They do not prove hooks fire correctly inside Claude Code.
 
-## What Still Requires Manual Claude Code Validation
+## Manual Claude Code Validation — COMPLETE
 
-See [tests/e2e/VALIDATION.md](../tests/e2e/VALIDATION.md) for the full 10-scenario checklist. Key scenarios:
+All 10 scenarios validated on 2026-04-05, Claude Code v2.1.78, macOS.
+See [tests/e2e/evidence/validation-2026-04-05.md](../tests/e2e/evidence/validation-2026-04-05.md) for full evidence.
 
-1. **Plugin installs and loads** in a real Claude Code session
-2. **SessionStart additionalContext** actually appears in Claude's context
-3. **PreCompact/PostCompact** fire on `/compact` and produce items in SQLite
-4. **Skills** are invocable and produce output inside Claude Code
-5. **Conflict detection** catches contradictions in a live session
-6. **Pin/dismiss/revive** lifecycle works end-to-end
+| # | Scenario | Result |
+|---|----------|--------|
+| 1 | Plugin Install | **PASS** |
+| 2 | Plugin Reload | **PASS** |
+| 3 | SessionStart Restore | **PASS** — 26 items restored, pinned-first |
+| 4 | PreCompact Capture | **PASS** — transcript extraction working |
+| 5 | PostCompact Capture | **PASS** — compact_summary extraction working |
+| 6 | InstructionsLoaded | **PASS** — CLAUDE.md path recorded |
+| 7 | Skill Invocation | **PASS** — all 4 skills working |
+| 8 | Conflict Detection | **PASS** — 52 conflicts detected, 25 items rejected |
+| 9 | Pin/Dismiss/Revive | **PASS** — all lifecycle actions work |
+| 10 | Fresh Install | **PASS** — clean startup, no crashes |
 
-None of these are marked as passed in this repository. Evidence must be captured and stored in `tests/e2e/evidence/` before claiming full validation.
+Database at validation time: 77 items, 52 conflicts, 639 audit entries, 10 sessions.
 
 ## Fresh-Clone Developer Path
 
@@ -91,21 +98,20 @@ These are accurate and defensible:
 - "SHA-256 fingerprint deduplication"
 - "Local-first, SQLite-backed, no cloud dependencies"
 - "Early MVP / prototype"
+- "All 10 E2E scenarios validated in Claude Code v2.1.78"
 
 ## Claims to Avoid for Now
 
 - "Production-ready" -- this is a prototype
-- "Fully E2E tested" -- manual validation is pending
 - "Semantic conflict detection" -- the detector is heuristic (keyword/polarity/value-pair), not semantic
 - "All conversation memory is captured" -- only assistant messages from transcripts, plus compact summaries
 - "File-aware restore" -- file relevance scoring is implemented but not wired into runtime (scorer always gets neutral baseline)
 - "Sessions start from zero without the plugin" -- Claude Code has CLAUDE.md, auto-memory, and compaction summaries; it does not start from absolute zero
 - "Complete lifecycle management" -- SessionEnd is a no-op; Stop does minimal work; stale-item cleanup is not implemented
 
-## Recommended Pre-Launch Steps
+## Recommended Next Steps
 
-1. Run the 10 manual validation scenarios in Claude Code
-2. Capture evidence artifacts in `tests/e2e/evidence/`
-3. Update the results table in VALIDATION.md
-4. Record a terminal demo for README/LinkedIn
-5. Consider adding a `--version` flag or startup log line for debugging
+1. Record a terminal demo for README/LinkedIn (VHS or asciinema)
+2. Consider adding a `--version` flag or startup log line for debugging
+3. Investigate false positive conflicts from compact summary fragments
+4. Add FTS5 for semantic search in a future milestone

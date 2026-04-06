@@ -1,6 +1,6 @@
 # claude-context-governor
 
-> **Status**: Early MVP / prototype. Automated tests pass (61/61). Manual Claude Code validation pending -- see [validation checklist](tests/e2e/VALIDATION.md).
+> **Status**: Early MVP / prototype. All tests pass (61/61 automated + 10/10 manual Claude Code scenarios). See [validation results](tests/e2e/VALIDATION.md).
 
 **Memory governance for Claude Code** — selective, explainable, conflict-checked memory restoration with audit trail.
 
@@ -40,7 +40,7 @@ claude --plugin-dir /path/to/claude-context-governor
 | Unit tests (39 tests) | Automated, passing |
 | Simulation tests (15 tests) | Automated, passing |
 | Skill CLI tests (7 tests) | Automated, passing (require build artifacts) |
-| Claude Code E2E validation | Manual, [pending](tests/e2e/VALIDATION.md) |
+| Claude Code E2E (10 scenarios) | [Validated 2026-04-05](tests/e2e/evidence/validation-2026-04-05.md) |
 
 Skill CLI tests shell out to compiled scripts in `dist/`. Both `npm test` and `npm run verify` build first, so this works from a fresh clone.
 

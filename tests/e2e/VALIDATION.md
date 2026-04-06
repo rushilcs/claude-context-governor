@@ -28,11 +28,10 @@ End-to-end pipeline tests using in-memory SQLite. Simulate hook inputs and verif
 | post-compact.test.ts | 3 | compact_summary extraction, confidence bonus, cross-source dedup |
 | instructions-loaded.test.ts | 3 | Instruction file recording, multiple files, path dedup |
 
-## Tier 3: Manual Claude Code Validation -- PENDING
+## Tier 3: Manual Claude Code Validation -- PASS (10/10)
 
-These scenarios must be run inside a real Claude Code session. They cannot be automated from outside Claude Code.
-
-**Status: Not yet validated. Checklist below must be completed by a human operator.**
+Validated 2026-04-05, Claude Code v2.1.78, macOS, Node.js v20.12.2.
+Full evidence: [tests/e2e/evidence/validation-2026-04-05.md](evidence/validation-2026-04-05.md).
 
 ### Prerequisites
 
@@ -202,13 +201,13 @@ Evidence files should include:
 
 | # | Scenario | Automated | Manual | Notes |
 |---|----------|-----------|--------|-------|
-| 1 | Plugin Install | N/A | PENDING | |
-| 2 | Plugin Reload | N/A | PENDING | |
-| 3 | SessionStart Restore | Simulation PASS | PENDING | |
-| 4 | PreCompact Capture | Simulation PASS | PENDING | |
-| 5 | PostCompact Capture | Simulation PASS | PENDING | |
-| 6 | InstructionsLoaded | Simulation PASS | PENDING | Fallback exists if hook doesn't fire |
-| 7 | /memory-status | Argv test PASS | PENDING | |
-| 8 | Conflict Detection | Unit test PASS | PENDING | |
-| 9 | Pin/Dismiss/Revive | N/A | PENDING | |
-| 10 | Fresh Install | N/A | PENDING | |
+| 1 | Plugin Install | N/A | **PASS** | Plugin loads, skills registered |
+| 2 | Plugin Reload | N/A | **PASS** | Validated in M0 spike |
+| 3 | SessionStart Restore | Simulation PASS | **PASS** | 26 items restored, pinned-first confirmed |
+| 4 | PreCompact Capture | Simulation PASS | **PASS** | 11 transcript items, hook fires on /compact |
+| 5 | PostCompact Capture | Simulation PASS | **PASS** | 66 compact_summary items across sessions |
+| 6 | InstructionsLoaded | Simulation PASS | **PASS** | CLAUDE.md recorded on session_start + compact |
+| 7 | /memory-status | Argv test PASS | **PASS** | All 4 skills produce correct output |
+| 8 | Conflict Detection | Unit test PASS | **PASS** | 52 conflicts, 25 rejected items |
+| 9 | Pin/Dismiss/Revive | N/A | **PASS** | Pin, dismiss, revive, stale all work |
+| 10 | Fresh Install | N/A | **PASS** | Clean startup across 10 sessions |
