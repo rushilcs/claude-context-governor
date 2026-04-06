@@ -33,7 +33,7 @@ async function main() {
   const input = (await readStdin()) as PreCompactInput;
   debugLog(`stdin parsed: session_id=${input.session_id}, cwd=${input.cwd}`);
   debugLog(`transcript_path=${input.transcript_path}`);
-  debugLog(`compact_summary present=${!!(input as Record<string, unknown>).compact_summary}`);
+  debugLog(`compact_summary present=${!!((input as unknown) as Record<string, unknown>).compact_summary}`);
   debugLog(`hook_event_name=${input.hook_event_name}`);
 
   const db = getDatabase();

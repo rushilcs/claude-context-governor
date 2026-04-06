@@ -78,6 +78,6 @@ Rationale: this is a governance layer, not a notes dump. Fewer, higher-quality m
 2. The audit report clearly shows what was loaded, what was rejected (with conflict reason), and token budget used.
 3. A conflict between a memory candidate and CLAUDE.md is detected and handled (rejected or flagged).
 4. SessionStart restore completes in <3 seconds.
-5. The plugin is installable from a git clone with `pnpm install && pnpm build`.
+5. The plugin is installable from a git clone with `npm install && npm run build`.
 6. At least one demo scenario can be recorded as a terminal gif and posted to GitHub/LinkedIn.
 7. A developer can pin, dismiss, and revive memory items using /memory-manage.

@@ -17,7 +17,7 @@ Pure function tests with no I/O, no process spawning, no SQLite. These test the 
 | serializer | Feed scored items + budget, assert Markdown output format and token budget enforcement |
 | tokens | Feed strings of known length, assert reasonable token estimates |
 
-**Run**: `pnpm test` (via vitest)
+**Run**: `npm test` (via vitest)
 
 **Coverage target**: >90% for extract/, conflict/, restore/ modules.
 
@@ -35,7 +35,7 @@ These tests spawn compiled hook handler JS files with mock stdin JSON, capture s
 
 **Implementation**: each test spawns `node dist/hooks/on-<event>.js` as a child process, pipes JSON to stdin, reads stdout, then queries the test SQLite database for side effects.
 
-**Run**: `pnpm test:simulation`
+**Run**: `npm test` (simulation tests are included in the default test run)
 
 ### Limitation
 

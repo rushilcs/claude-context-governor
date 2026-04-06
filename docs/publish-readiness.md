@@ -25,7 +25,7 @@ Last updated: 2026-04-05
 
 ## What Is Automated-Test Verified
 
-60 tests passing (39 unit + 15 simulation + 6 skill argv):
+61 tests passing (39 unit + 15 simulation + 7 skill argv):
 
 - **Classifier**: 7 tests -- pattern matching for all 4 categories, confidence by source, null for non-matches
 - **Fingerprint**: 6 tests -- determinism, whitespace/case normalization, category/content differentiation
@@ -34,11 +34,15 @@ Last updated: 2026-04-05
 - **Detector**: 5 tests -- polarity conflict, value conflict, non-conflicting items, DB persistence, audit logging
 - **Scorer**: 5 tests -- recency, confidence, category priority, file relevance (test-only path), breakdown
 - **Serializer**: 5 tests -- empty output, header/budget, category grouping, pinned label, source label
-- **Skills**: 6 tests -- argv validation, usage messages, error exits for all 4 skills
+- **Skills**: 7 tests -- argv validation, usage messages, error exits for all 4 skills (requires build artifacts)
 - **SessionStart sim**: 6 tests -- restore, budget, pinned priority, empty DB, dismissed exclusion, audit
 - **PreCompact sim**: 3 tests -- transcript fixture extraction, SQLite storage, session count
 - **PostCompact sim**: 3 tests -- compact_summary extraction, confidence bonus, cross-source dedup
 - **InstructionsLoaded sim**: 3 tests -- file recording, multiple files, path dedup
+
+### Build dependency note
+
+Skill CLI tests (`skills.test.ts`) shell out to compiled scripts in `dist/`. The `npm test` and `npm run verify` commands build before testing, so tests pass from a fresh clone. For rapid iteration without rebuilding, use `npm run test:fast` (which will skip skill tests if `dist/` is missing).
 
 ## What Is Simulation Verified (But Not Live)
 
@@ -62,6 +66,17 @@ See [tests/e2e/VALIDATION.md](../tests/e2e/VALIDATION.md) for the full 10-scenar
 6. **Pin/dismiss/revive** lifecycle works end-to-end
 
 None of these are marked as passed in this repository. Evidence must be captured and stored in `tests/e2e/evidence/` before claiming full validation.
+
+## Fresh-Clone Developer Path
+
+After `git clone`, these commands should work:
+
+```bash
+npm install
+npm run verify    # typecheck + build + test (61/61)
+```
+
+See [docs/fresh-clone-audit.md](fresh-clone-audit.md) for the full audit of the first-time developer path.
 
 ## Safe Public Claims
 

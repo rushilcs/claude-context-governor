@@ -1,10 +1,48 @@
 # claude-context-governor
 
-> **Status**: Early MVP / prototype. Automated tests pass (60/60). Manual Claude Code validation pending -- see [validation checklist](tests/e2e/VALIDATION.md).
+> **Status**: Early MVP / prototype. Automated tests pass (61/61). Manual Claude Code validation pending -- see [validation checklist](tests/e2e/VALIDATION.md).
 
 **Memory governance for Claude Code** — selective, explainable, conflict-checked memory restoration with audit trail.
 
 Claude Code already has memory. But should it remember *everything*? `claude-context-governor` is a Claude Code plugin that extracts structured candidate memories from transcripts and compaction summaries, checks them against project instructions, and restores selected items on session start.
+
+## Quickstart
+
+**Prerequisites**: Node.js >= 18, npm, Claude Code CLI installed and authenticated.
+
+```bash
+git clone https://github.com/rushilcs/claude-context-governor.git
+cd claude-context-governor
+npm install
+npm run verify    # typecheck + build + test (61/61 tests)
+```
+
+Run the plugin with Claude Code:
+
+```bash
+claude --plugin-dir /path/to/claude-context-governor
+```
+
+### Available commands
+
+| Command | What it does |
+|---------|-------------|
+| `npm run verify` | Full validation: typecheck, build, and test (run this first) |
+| `npm test` | Build + run all tests |
+| `npm run test:fast` | Run tests without rebuilding (requires prior build) |
+| `npm run build` | Build hook and skill scripts to `dist/` |
+| `npm run typecheck` | TypeScript type checking only |
+
+### What is automated vs manual
+
+| What | Status |
+|------|--------|
+| Unit tests (39 tests) | Automated, passing |
+| Simulation tests (15 tests) | Automated, passing |
+| Skill CLI tests (7 tests) | Automated, passing (require build artifacts) |
+| Claude Code E2E validation | Manual, [pending](tests/e2e/VALIDATION.md) |
+
+Skill CLI tests shell out to compiled scripts in `dist/`. Both `npm test` and `npm run verify` build first, so this works from a fresh clone.
 
 ## The Problem
 
@@ -53,21 +91,6 @@ This is not "persistent memory." This is **memory governance**:
 │  Pinned first ──→ Fill by score ──→ Serialize           │
 │  ──→ additionalContext JSON ──→ Claude Code context     │
 └─────────────────────────────────────────────────────────┘
-```
-
-## Installation
-
-```bash
-git clone https://github.com/rushilcs/claude-context-governor.git
-cd claude-context-governor
-npm install
-npm run build
-```
-
-Then start Claude Code with the plugin:
-
-```bash
-claude --plugin-dir /path/to/claude-context-governor
 ```
 
 ## Memory Categories
@@ -139,15 +162,6 @@ The governor uses sensible defaults. Key settings:
 - **Extraction**: Pattern-based classification from assistant messages in transcripts and from compaction summaries
 - **Deduplication**: SHA-256 fingerprint of normalized content + category
 - **Conflict detection**: Heuristic keyword overlap + polarity/value-pair analysis against project instruction files
-
-## Development
-
-```bash
-npm install
-npm run build        # Build with tsup
-npm test             # Run all tests
-npm run typecheck    # TypeScript type checking
-```
 
 ## License
 

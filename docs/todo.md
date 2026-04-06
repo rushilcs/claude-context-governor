@@ -24,7 +24,7 @@ Derived from milestones. Execute in order.
 
 ## M1: Foundation
 
-- [ ] `pnpm init` + configure package.json (name, dependencies, scripts)
+- [ ] `npm init` + configure package.json (name, dependencies, scripts)
 - [ ] Install: better-sqlite3, uuid
 - [ ] Install devDeps: typescript, @types/better-sqlite3, @types/node, vitest, tsup
 - [ ] `tsconfig.json` (strict, ES2022, NodeNext)
@@ -39,7 +39,7 @@ Derived from milestones. Execute in order.
 - [ ] `src/utils/stdin.ts` (read stdin JSON, validate, return typed object)
 - [ ] `.gitignore` (node_modules, dist, *.db, spike/results/)
 - [ ] `LICENSE` (MIT)
-- [ ] Verify: `pnpm build` succeeds, database init creates tables
+- [ ] Verify: `npm run build` succeeds, database init creates tables
 
 ## M2: Capture Pipeline
 
@@ -124,4 +124,4 @@ Derived from milestones. Execute in order.
 - [ ] Update README.md with installation, usage, architecture overview
 - [ ] Record terminal demo of conflict detection scenario
 - [ ] Create demo screenshots for /memory-audit output
-- [ ] Final `pnpm build && pnpm test` all green
+- [ ] Final `npm run build && npm test` all green

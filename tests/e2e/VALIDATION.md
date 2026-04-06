@@ -1,6 +1,6 @@
 # Validation Status
 
-## Tier 1: Automated Unit Tests (39 tests) -- PASSING
+## Tier 1: Automated Unit Tests (46 tests) -- PASSING
 
 Pure-function tests with no external dependencies. Run via `npm test`.
 
@@ -13,7 +13,9 @@ Pure-function tests with no external dependencies. Run via `npm test`.
 | detector.test.ts | 5 | Polarity/value conflict detection, DB persistence |
 | scorer.test.ts | 5 | Recency, confidence, category priority scoring |
 | serializer.test.ts | 5 | Markdown context formatting, pinned/source labels |
-| skills.test.ts | 6 | Skill argv parsing, usage messages, error exits |
+| skills.test.ts | 7 | Skill CLI argv parsing, usage messages, error exits (requires build) |
+
+Note: `skills.test.ts` shells out to compiled scripts in `dist/`. The `npm test` command builds before testing, so this works from a fresh clone.
 
 ## Tier 2: Automated Simulation Tests (15 tests) -- PASSING
 
@@ -30,7 +32,7 @@ End-to-end pipeline tests using in-memory SQLite. Simulate hook inputs and verif
 
 These scenarios must be run inside a real Claude Code session. They cannot be automated from outside Claude Code.
 
-**Status: Not yet validated in this pass. Checklist below must be completed by a human operator.**
+**Status: Not yet validated. Checklist below must be completed by a human operator.**
 
 ### Prerequisites
 

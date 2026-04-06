@@ -62,7 +62,7 @@
 
 **Dependencies**: M0 spike completed with go decision
 
-**Exit criteria**: `pnpm install && pnpm build` succeeds; database initializes with correct schema; types compile without errors
+**Exit criteria**: `npm install && npm run build` succeeds; database initializes with correct schema; types compile without errors
 
 ---
 
@@ -184,7 +184,7 @@
 
 **Dependencies**: M6
 
-**Exit criteria**: All Tier 3 validation scenarios pass. Fresh `git clone && pnpm install && pnpm build && claude --plugin-dir ./` works. Demo recording complete.
+**Exit criteria**: All Tier 3 validation scenarios pass. Fresh `git clone && npm install && npm run build && claude --plugin-dir ./` works. Demo recording complete.
 
 ---
 

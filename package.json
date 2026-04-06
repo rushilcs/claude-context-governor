@@ -14,10 +14,11 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "vitest run",
+    "test": "npm run build && vitest run",
+    "test:fast": "vitest run",
     "test:watch": "vitest",
-    "test:simulation": "vitest run --project simulation",
     "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run build && vitest run",
     "clean": "rm -rf dist"
   },
   "dependencies": {
