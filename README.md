@@ -1,74 +1,130 @@
 # claude-context-governor
 
-> **Status**: Early MVP / prototype. All tests pass (61/61 automated + 10/10 manual Claude Code scenarios). See [validation results](tests/e2e/VALIDATION.md).
+**Memory governance for Claude Code** — selective, explainable, conflict-checked memory restoration with full audit trail.
 
-**Memory governance for Claude Code** — selective, explainable, conflict-checked memory restoration with audit trail.
+> **Validated**: 61/61 automated tests + [10/10 manual Claude Code scenarios](tests/e2e/evidence/validation-2026-04-05.md) on Claude Code v2.1.78.
 
-Claude Code already has memory. But should it remember *everything*? `claude-context-governor` is a Claude Code plugin that extracts structured candidate memories from transcripts and compaction summaries, checks them against project instructions, and restores selected items on session start.
+---
 
-## Quickstart
+## Why This Exists
 
-**Prerequisites**: Node.js >= 18, npm, Claude Code CLI installed and authenticated.
+Claude Code loses context after compaction and across sessions. Without governance, you get one of two outcomes:
+
+- **Nothing restored** — every session starts cold, repeating decisions you already made
+- **Everything restored** — stale information, context bloat, and invisible drift from your project rules
+
+Neither is acceptable. You need Claude to remember the *right* things, reject the *wrong* things, and prove why.
+
+## What It Does
+
+Install the plugin, work normally, and the governor handles the rest:
+
+1. When `/compact` fires, it **extracts** decisions, constraints, conventions, and bug-lessons from your conversation
+2. It **checks** each candidate against your `CLAUDE.md` and `.claude/rules/` — contradictions are rejected
+3. On your next session start, it **restores** the highest-value items within a token budget
+4. Every decision is **audited** — what loaded, what was skipped, what was rejected, and why
+
+Zero configuration required. No cloud. Fully local.
+
+## Install
 
 ```bash
 git clone https://github.com/rushilcs/claude-context-governor.git
 cd claude-context-governor
 npm install
-npm run verify    # typecheck + build + test (61/61 tests)
+npm run build
 ```
 
-Run the plugin with Claude Code:
+Then start any Claude Code session with the plugin:
 
 ```bash
 claude --plugin-dir /path/to/claude-context-governor
 ```
 
-### Available commands
+That's it. The governor is now active. Work normally — it captures and restores in the background.
 
-| Command | What it does |
-|---------|-------------|
-| `npm run verify` | Full validation: typecheck, build, and test (run this first) |
-| `npm test` | Build + run all tests |
-| `npm run test:fast` | Run tests without rebuilding (requires prior build) |
-| `npm run build` | Build hook and skill scripts to `dist/` |
-| `npm run typecheck` | TypeScript type checking only |
+## What You Get
 
-### What is automated vs manual
+### Governed memory across sessions
 
-| What | Status |
-|------|--------|
-| Unit tests (39 tests) | Automated, passing |
-| Simulation tests (15 tests) | Automated, passing |
-| Skill CLI tests (7 tests) | Automated, passing (require build artifacts) |
-| Claude Code E2E (10 scenarios) | [Validated 2026-04-05](tests/e2e/evidence/validation-2026-04-05.md) |
+Decisions you make in one session carry forward to the next, scored by recency and confidence, within a token budget. Pinned items always restore first.
 
-Skill CLI tests shell out to compiled scripts in `dist/`. Both `npm test` and `npm run verify` build first, so this works from a fresh clone.
+```
+## Restored Memory (claude-context-governor)
+3 loaded | 1 skipped | budget: 187/2000 tokens
 
-## The Problem
+### Decisions
+- [2026-04-05] Use PostgreSQL for the database — JSONB support needed
+  (confidence: 0.80, source: transcript)
 
-Claude Code loses context after compaction and across sessions. The naive fix — dump everything back in — causes context bloat, stale information, and invisible drift from project rules. There is no built-in mechanism to inspect what context was restored or why, or whether it contradicts your `CLAUDE.md`.
+### Constraints
+- [2026-04-05] Never use ORM for complex queries — raw SQL only
+  (confidence: 0.85, source: compact_summary) [pinned]
 
-## What This Does
+### Conventions
+- [2026-04-05] API endpoints follow /v1/resource/:id pattern
+  (confidence: 0.75, source: compact_summary)
+```
 
-`claude-context-governor` intercepts Claude Code's session and compaction lifecycle to provide **governed memory**:
+### Conflict detection against your project rules
 
-1. **Capture** — Extracts structured candidate memories from assistant messages in session transcripts and from compaction summaries
-2. **Classify** — Categorizes items as decisions, constraints, conventions, or bug lessons
-3. **Conflict-check** — Detects contradictions between memory items and your `CLAUDE.md` / `.claude/rules/`
-4. **Restore selectively** — Scores items by recency, confidence, and category priority within a token budget
-5. **Audit everything** — Every load, skip, and rejection is logged with reasoning and token cost
+When a memory candidate contradicts your `CLAUDE.md`, the governor catches it:
 
-## Key Differentiator
+```
+Memory extracted: "Use tabs for indentation"
+  ↓
+Conflict detected vs CLAUDE.md: "Always use spaces, never tabs"
+  ↓
+Item REJECTED — logged in audit trail with full reasoning
+```
 
-This is not "persistent memory." This is **memory governance**:
+In live validation, the governor detected **52 conflicts** and rejected **25 items** that contradicted project rules.
 
-| Feature | Generic Memory | claude-context-governor |
-|---------|---------------|------------------------|
-| Storage | Save everything | Classify and deduplicate |
-| Restore | Dump all items | Score and budget tokens |
-| Conflicts | Ignore | Detect and reject/flag |
-| Trust | Hope it's right | Prove every decision |
-| Control | None | Pin, dismiss, revive |
+### Full audit trail
+
+Every decision is traceable. Run `/memory-audit` to see exactly what happened:
+
+```
+Extracted: 13 | Loaded: 54 | Skipped: 26 | Rejected: 6
+Token cost: 3,968
+
+Decision Log:
+  loaded   | "Use PostgreSQL for storage"     | Score: 0.82, decision
+  loaded   | "Pinned: request-id header"      | Pinned item restored (score: 0.81)
+  skipped  | "Working on auth module"         | Score: 0.31, budget full
+  rejected | "Use tabs for indentation"       | Conflicts with CLAUDE.md
+```
+
+### User control over memory lifecycle
+
+You decide what sticks:
+
+```
+/memory-manage pin dd6fc35a       → Pinned: always restores regardless of score
+/memory-manage dismiss 2d659226   → Dismissed: removed from future restores
+/memory-manage revive 2d659226    → Revived: back in the active pool
+/memory-manage stale 8b44024d     → Expired: soft removal
+```
+
+## Skills Reference
+
+Once the plugin is loaded, these skills are available in any Claude Code session:
+
+| Skill | What it does | Example |
+|-------|-------------|---------|
+| `/memory-status` | Item counts, categories, last session, storage size | See active vs rejected vs dismissed breakdown |
+| `/memory-audit` | Full audit report for a session or project-wide | `/memory-audit` or `/memory-audit <session-id>` |
+| `/memory-search` | Query items by keyword, category, or status | `/memory-search PostgreSQL` or `/memory-search --category=decision` |
+| `/memory-manage` | Pin, dismiss, revive, or mark items as stale | `/memory-manage pin <item-id>` |
+
+## Memory Categories
+
+| Category | What it captures | Example |
+|----------|-----------------|---------|
+| **decision** | Architectural and implementation choices | "Decided to use PostgreSQL for the main database" |
+| **constraint** | Hard rules and requirements | "Must always use 2-space indentation" |
+| **convention** | Team patterns and standards | "Convention: use kebab-case for API endpoints" |
+| **bug-lesson** | Root causes and fixes | "Race condition in webhook handler: acquire lock first" |
 
 ## How It Works
 
@@ -93,75 +149,65 @@ This is not "persistent memory." This is **memory governance**:
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Memory Categories
-
-| Category | What it captures | Example |
-|----------|-----------------|---------|
-| **decision** | Architectural and implementation choices | "Decided to use PostgreSQL for the main database" |
-| **constraint** | Hard rules and requirements | "Must always use 2-space indentation" |
-| **convention** | Team patterns and standards | "Convention: use kebab-case for API endpoints" |
-| **bug-lesson** | Root causes and fixes | "The issue was a race condition in webhook handler" |
-
-## Skills
-
-| Command | Description |
-|---------|-------------|
-| `/memory-status` | Current item counts by status and category |
-| `/memory-audit` | Full audit report: loaded, skipped, rejected, and why |
-| `/memory-search` | Query memory items by keyword, category, or status |
-| `/memory-manage` | Pin, dismiss, revive, or mark items as stale |
-
-## Conflict Detection
-
-When a candidate memory item contradicts your project rules, the governor's heuristic detector catches it:
-
-```
-Memory extracted: "Use tabs for indentation"
-  ↓
-Conflict detected vs CLAUDE.md: "Always use spaces, never tabs"
-  ↓
-Item REJECTED — logged in audit trail with full reasoning
-```
-
-## Audit Trail
-
-Every decision is traceable:
-
-```markdown
-## Summary
-- Extracted: 8
-- Loaded: 5
-- Skipped: 2 (low score / budget full)
-- Rejected: 1 (conflict with CLAUDE.md)
-- Token cost: 1,847 / 2,000
-
-## Decision Log
-| Time     | Action   | Item                          | Reason                    |
-|----------|----------|-------------------------------|---------------------------|
-| 14:23:01 | loaded   | Use PostgreSQL for storage    | Score: 0.92, decision     |
-| 14:23:01 | loaded   | Never use raw SQL queries     | Score: 0.88, constraint   |
-| 14:23:01 | skipped  | Working on auth module        | Score: 0.31, budget full  |
-| 14:23:01 | rejected | Use tabs for indentation      | Conflicts with CLAUDE.md  |
-```
+The plugin hooks into 6 Claude Code lifecycle events. Capture happens automatically when you `/compact` or when auto-compaction fires. Restore happens automatically on every session start. All data stays in a local SQLite database.
 
 ## Configuration
 
-The governor uses sensible defaults. Key settings:
+Works out of the box with sensible defaults. Tune if needed:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `tokenBudget` | 2000 | Max tokens for restored memory |
+| `tokenBudget` | 2000 | Max tokens for restored memory per session |
 | `recencyDays` | 7 | Items older than this score lower |
-| `expirationDays` | 30 | Auto-expire unverified items |
-| `experimentalCategories` | false | Enable open-question, command-recipe, work-in-progress |
+| `expirationDays` | 30 | Auto-expire items not seen in this many days |
+| `experimentalCategories` | false | Enable open-question, command-recipe, work-in-progress categories |
 
-## Architecture
+## Key Design Decisions
 
-- **Storage**: SQLite via `better-sqlite3` in `${CLAUDE_PLUGIN_DATA}/governor.db`
-- **Hooks**: SessionStart (restore), PreCompact (extract), PostCompact (extract), InstructionsLoaded (rule tracking), Stop (session tracking), SessionEnd (no-op due to timeout)
-- **Extraction**: Pattern-based classification from assistant messages in transcripts and from compaction summaries
-- **Deduplication**: SHA-256 fingerprint of normalized content + category
-- **Conflict detection**: Heuristic keyword overlap + polarity/value-pair analysis against project instruction files
+| Aspect | Approach | Why |
+|--------|----------|-----|
+| **Storage** | SQLite via `better-sqlite3` | Single file, local-first, synchronous for fast hooks |
+| **Extraction** | Pattern-based heuristics | Deterministic, fast, no API calls, no LLM cost |
+| **Deduplication** | SHA-256 fingerprint | Content + category hash prevents accumulation across sessions |
+| **Conflict detection** | Keyword overlap + polarity/value-pair | Catches tabs-vs-spaces, MySQL-vs-PostgreSQL, etc. |
+| **Scoring** | Recency + confidence + category priority | Exponential decay keeps context fresh |
+| **Trust model** | CLAUDE.md always wins | Project rules are explicit and versioned; extracted memories are heuristic |
+
+## Validation Results
+
+Validated on 2026-04-05, Claude Code v2.1.78, macOS.
+
+| Layer | Tests | Status |
+|-------|-------|--------|
+| Unit tests | 39 | All passing |
+| Simulation tests | 15 | All passing |
+| Skill CLI tests | 7 | All passing |
+| **Claude Code E2E** | **10 scenarios** | **All passing** |
+
+Live validation produced: **77 memory items**, **52 conflict detections**, **639 audit entries** across **10 sessions**. Full evidence: [validation report](tests/e2e/evidence/validation-2026-04-05.md).
+
+## Development
+
+```bash
+npm install
+npm run verify    # typecheck + build + test (61/61 from a fresh clone)
+npm test          # build + test
+npm run test:fast # tests only (skip build, for rapid iteration)
+npm run typecheck # TypeScript checking only
+npm run build     # build hooks + skills to dist/
+```
+
+Prerequisites: Node.js >= 18, npm.
+
+## Status
+
+Early MVP / prototype. The core pipeline works end-to-end and has been validated in real Claude Code sessions. Areas for future improvement:
+
+- Semantic extraction (LLM-based) to complement pattern matching
+- FTS5 full-text search across memory items
+- Branch-aware memory (schema supports it, not yet wired)
+- File-relevance scoring during restore (implemented but not wired into runtime)
+- Web dashboard for memory inspection (audit reporter already produces JSON)
 
 ## License
 
