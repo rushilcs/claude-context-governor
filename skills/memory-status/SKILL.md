@@ -1,10 +1,10 @@
-# /memory-status
+# /claude-context-governor:memory-status
 
 Show current memory governance status for this project.
 
 ## Instructions
 
-When the user invokes `/memory-status`, run:
+When the user invokes `/claude-context-governor:memory-status`, run:
 
 ```bash
 node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-status.js

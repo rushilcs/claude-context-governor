@@ -1,10 +1,10 @@
-# /memory-audit
+# /claude-context-governor:memory-audit
 
 Generate an audit report of memory governance decisions.
 
 ## Instructions
 
-When the user invokes `/memory-audit`, optionally followed by a session ID, run:
+When the user invokes `/claude-context-governor:memory-audit`, optionally followed by a session ID, run:
 
 ```bash
 node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-audit.js [session-id]

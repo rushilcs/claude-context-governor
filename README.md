@@ -54,16 +54,13 @@ Decisions you make in one session carry forward to the next, scored by recency a
 3 loaded | 1 skipped | budget: 187/2000 tokens
 
 ### Decisions
-- [2026-04-05] Use PostgreSQL for the database — JSONB support needed
-  (confidence: 0.80, source: transcript)
+- [2026-04-05] Use PostgreSQL for the database — JSONB support needed (confidence: 0.8)
 
 ### Constraints
-- [2026-04-05] Never use ORM for complex queries — raw SQL only
-  (confidence: 0.85, source: compact_summary) [pinned]
+- [2026-04-05] Never use ORM for complex queries — raw SQL only (confidence: 0.9, source: compact_summary, pinned)
 
 ### Conventions
-- [2026-04-05] API endpoints follow /v1/resource/:id pattern
-  (confidence: 0.75, source: compact_summary)
+- [2026-04-05] API endpoints follow /v1/resource/:id pattern (confidence: 0.8, source: compact_summary)
 ```
 
 ### Conflict detection against your project rules
@@ -85,14 +82,21 @@ In live validation, the governor detected **52 conflicts** and rejected **25 ite
 Every decision is traceable. Run `/claude-context-governor:memory-audit` to see exactly what happened:
 
 ```
-Extracted: 13 | Loaded: 54 | Skipped: 26 | Rejected: 6
-Token cost: 3,968
+## Summary
+- Extracted: 13
+- Loaded: 54
+- Skipped: 26
+- Rejected: 6
+- Conflicts detected: 3
+- Total token cost: 3968
 
-Decision Log:
-  loaded   | "Use PostgreSQL for storage"     | Score: 0.82, decision
-  loaded   | "Pinned: request-id header"      | Pinned item restored (score: 0.81)
-  skipped  | "Working on auth module"         | Score: 0.31, budget full
-  rejected | "Use tabs for indentation"       | Conflicts with CLAUDE.md
+## Decision Log
+| Time     | Action   | Item                              | Reason                    | Tokens |
+|----------|----------|-----------------------------------|---------------------------|--------|
+| 14:32:01 | loaded   | Use PostgreSQL for storage        | Score: 0.82, decision     | 12     |
+| 14:32:01 | loaded   | Pinned: request-id header         | Pinned item restored      | 8      |
+| 14:32:01 | skipped  | Working on auth module            | Budget full               | -      |
+| 14:32:01 | rejected | Use tabs for indentation          | Conflicts with CLAUDE.md  | -      |
 ```
 
 ### User control over memory lifecycle
@@ -153,13 +157,13 @@ The plugin hooks into 6 Claude Code lifecycle events. Capture happens automatica
 
 ## Configuration
 
-Works out of the box with sensible defaults. Tune if needed:
+Works out of the box with sensible defaults. There is no runtime config file yet — to change these, edit `src/utils/config.ts` and rebuild:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `tokenBudget` | 2000 | Max tokens for restored memory per session |
-| `recencyDays` | 7 | Items older than this score lower |
-| `expirationDays` | 30 | Auto-expire items not seen in this many days |
+| `recencyDays` | 7 | Items older than this score lower (exponential decay) |
+| `confidenceThreshold` | 0.3 | Minimum confidence to accept an extracted item |
 | `experimentalCategories` | false | Enable open-question, command-recipe, work-in-progress categories |
 
 ## Key Design Decisions
