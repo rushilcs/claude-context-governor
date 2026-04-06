@@ -10,6 +10,8 @@ When the user invokes `/claude-context-governor:memory-manage`, followed by an a
 node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-manage.js <action> <item-id>
 ```
 
+**Display the full output to the user exactly as printed.** Do not summarize or paraphrase it.
+
 Supported actions:
 - `pin <item-id>` — Pin item so it always restores regardless of score
 - `dismiss <item-id>` — Dismiss item from future restores

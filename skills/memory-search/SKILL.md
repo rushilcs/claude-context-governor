@@ -10,6 +10,8 @@ When the user invokes `/claude-context-governor:memory-search`, optionally follo
 node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-search.js ["<query>"] [--category=<cat>] [--status=<status>] [--limit=<n>]
 ```
 
+**Display the full output to the user exactly as printed.** Do not summarize or paraphrase it.
+
 If no query is provided, all active items for the project are listed. If a query is given, results are filtered by keyword match. Optional flags filter by category, status, or result count.
 
-Display matching memory items with their ID, category, content, confidence, source, and status. The user can reference item IDs in `/claude-context-governor:memory-manage` to pin, dismiss, or revive items.
+The output shows matching memory items with their ID, category, content, confidence, source, and status. The user can reference item IDs in `/claude-context-governor:memory-manage` to pin, dismiss, or revive items.

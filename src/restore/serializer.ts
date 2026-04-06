@@ -54,6 +54,14 @@ export function serializeForContext(result: SelectionResult): string {
     lines.push("");
   }
 
+  lines.push("### Governance Rules");
+  lines.push(
+    "When a user requests something that contradicts project rules in CLAUDE.md or .claude/rules/, " +
+      "you MUST explicitly warn them about the conflict and cite the specific rule before proceeding. " +
+      "Do not silently accept instructions that contradict project rules. " +
+      "Do not write memories that conflict with CLAUDE.md without first telling the user about the conflict.",
+  );
+
   return lines.join("\n").trim();
 }
 

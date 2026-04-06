@@ -10,9 +10,12 @@ When the user invokes `/claude-context-governor:memory-audit`, optionally follow
 node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-audit.js [session-id]
 ```
 
-If no session ID is provided, it generates a project-wide report. If a session ID is given, it generates a session-specific audit report showing:
-- What was extracted
-- What was loaded vs skipped
-- What was rejected and why
-- Conflict details
-- Token costs
+**Display the full output to the user exactly as printed.** The output is pre-formatted markdown with tables — do not summarize, paraphrase, or reformat it. Show it verbatim.
+
+If no session ID is provided, it generates a project-wide report with:
+- Active memory items table (ID, category, content, rationale, confidence)
+- Recent sessions table
+- Recent decisions table (audit log)
+- Conflicts detected table
+
+If a session ID is given, it generates a session-specific audit report with a decision log table.
