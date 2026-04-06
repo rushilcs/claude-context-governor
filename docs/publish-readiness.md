@@ -10,8 +10,8 @@ Last updated: 2026-04-06
 - **Conflict detection**: Heuristic keyword overlap + polarity analysis + 8 value-pair rules. Checks extracted candidates against CLAUDE.md and .claude/rules/ content. Hard conflicts (high overlap or value-pair match) reject items; soft conflicts flag them.
 - **Selective restore**: SessionStart injects scored, budget-constrained memory items via `additionalContext`. Scoring uses recency (exponential decay), confidence, and category priority. Pinned items always included first.
 - **Audit trail**: Every extract, load, skip, reject, conflict-detect, pin, dismiss, revive, and expire action is logged with session ID, timestamp, memory item ID, reason, and token cost.
-- **User lifecycle controls**: Pin, dismiss, revive, mark-as-stale via /memory-manage skill.
-- **4 skills**: /memory-status, /memory-audit, /memory-search, /memory-manage. All read argv (project-dir + optional args), query SQLite, output formatted text.
+- **User lifecycle controls**: Pin, dismiss, revive, mark-as-stale via /claude-context-governor:memory-manage skill.
+- **4 skills**: /claude-context-governor:memory-status, /claude-context-governor:memory-audit, /claude-context-governor:memory-search, /claude-context-governor:memory-manage. All read argv (project-dir + optional args), query SQLite, output formatted text.
 
 ### What Each Hook Actually Does
 | Hook | Actual behavior |

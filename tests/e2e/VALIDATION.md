@@ -119,11 +119,11 @@ Full evidence: [tests/e2e/evidence/validation-2026-04-05.md](evidence/validation
 
 ---
 
-### Scenario 7: Skill Invocation -- /memory-status
+### Scenario 7: Skill Invocation -- /claude-context-governor:memory-status
 
 **Steps:**
 1. After scenarios 3-5 have populated the database
-2. Invoke `/memory-status` in a Claude Code session
+2. Invoke `/claude-context-governor:memory-status` in a Claude Code session
 
 **Pass criteria:** Skill executes, shows item counts by status and category.
 
@@ -138,23 +138,23 @@ Full evidence: [tests/e2e/evidence/validation-2026-04-05.md](evidence/validation
 2. Start a session, have Claude suggest using tabs in conversation
 3. Run `/compact`
 4. Check for conflict records: `sqlite3 <db-path> "SELECT * FROM conflict_records"`
-5. Run `/memory-audit` to see conflict in the audit report
+5. Run `/claude-context-governor:memory-audit` to see conflict in the audit report
 
 **Pass criteria:** Conflict detected between memory item and CLAUDE.md rule, item rejected or flagged.
 
-**Evidence to capture:** SQLite conflict_records output and /memory-audit output.
+**Evidence to capture:** SQLite conflict_records output and /claude-context-governor:memory-audit output.
 
 ---
 
 ### Scenario 9: Memory Lifecycle -- Pin/Dismiss/Revive
 
 **Steps:**
-1. Find an item ID via `/memory-search`
-2. Pin it: `/memory-manage pin <id>`
-3. Verify it shows as pinned in `/memory-status`
-4. Dismiss it: `/memory-manage dismiss <id>`
+1. Find an item ID via `/claude-context-governor:memory-search`
+2. Pin it: `/claude-context-governor:memory-manage pin <id>`
+3. Verify it shows as pinned in `/claude-context-governor:memory-status`
+4. Dismiss it: `/claude-context-governor:memory-manage dismiss <id>`
 5. Verify it no longer appears in active items
-6. Revive it: `/memory-manage revive <id>`
+6. Revive it: `/claude-context-governor:memory-manage revive <id>`
 7. Verify it's active again
 
 **Pass criteria:** All lifecycle actions work, each is audit-logged.
@@ -170,7 +170,7 @@ Full evidence: [tests/e2e/evidence/validation-2026-04-05.md](evidence/validation
 2. Start a fresh Claude Code session with the plugin
 3. Verify no errors on empty database
 4. Work normally, trigger `/compact`
-5. Run `/memory-status`
+5. Run `/claude-context-governor:memory-status`
 
 **Pass criteria:** No crashes on empty state, graceful handling throughout.
 
@@ -207,7 +207,7 @@ Evidence files should include:
 | 4 | PreCompact Capture | Simulation PASS | **PASS** | 11 transcript items, hook fires on /compact |
 | 5 | PostCompact Capture | Simulation PASS | **PASS** | 66 compact_summary items across sessions |
 | 6 | InstructionsLoaded | Simulation PASS | **PASS** | CLAUDE.md recorded on session_start + compact |
-| 7 | /memory-status | Argv test PASS | **PASS** | All 4 skills produce correct output |
+| 7 | /claude-context-governor:memory-status | Argv test PASS | **PASS** | All 4 skills produce correct output |
 | 8 | Conflict Detection | Unit test PASS | **PASS** | 52 conflicts, 25 rejected items |
 | 9 | Pin/Dismiss/Revive | N/A | **PASS** | Pin, dismiss, revive, stale all work |
 | 10 | Fresh Install | N/A | **PASS** | Clean startup across 10 sessions |

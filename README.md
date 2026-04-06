@@ -82,7 +82,7 @@ In live validation, the governor detected **52 conflicts** and rejected **25 ite
 
 ### Full audit trail
 
-Every decision is traceable. Run `/memory-audit` to see exactly what happened:
+Every decision is traceable. Run `/claude-context-governor:memory-audit` to see exactly what happened:
 
 ```
 Extracted: 13 | Loaded: 54 | Skipped: 26 | Rejected: 6
@@ -100,10 +100,10 @@ Decision Log:
 You decide what sticks:
 
 ```
-/memory-manage pin dd6fc35a       → Pinned: always restores regardless of score
-/memory-manage dismiss 2d659226   → Dismissed: removed from future restores
-/memory-manage revive 2d659226    → Revived: back in the active pool
-/memory-manage stale 8b44024d     → Expired: soft removal
+/claude-context-governor:memory-manage pin dd6fc35a       → Pinned: always restores regardless of score
+/claude-context-governor:memory-manage dismiss 2d659226   → Dismissed: removed from future restores
+/claude-context-governor:memory-manage revive 2d659226    → Revived: back in the active pool
+/claude-context-governor:memory-manage stale 8b44024d     → Expired: soft removal
 ```
 
 ## Skills Reference
@@ -112,10 +112,10 @@ Once the plugin is loaded, these skills are available in any Claude Code session
 
 | Skill | What it does | Example |
 |-------|-------------|---------|
-| `/memory-status` | Item counts, categories, last session, storage size | See active vs rejected vs dismissed breakdown |
-| `/memory-audit` | Full audit report for a session or project-wide | `/memory-audit` or `/memory-audit <session-id>` |
-| `/memory-search` | Query items by keyword, category, or status | `/memory-search PostgreSQL` or `/memory-search --category=decision` |
-| `/memory-manage` | Pin, dismiss, revive, or mark items as stale | `/memory-manage pin <item-id>` |
+| `/claude-context-governor:memory-status` | Item counts, categories, last session, storage size | See active vs rejected vs dismissed breakdown |
+| `/claude-context-governor:memory-audit` | Full audit report for a session or project-wide | `/claude-context-governor:memory-audit` or `/claude-context-governor:memory-audit <session-id>` |
+| `/claude-context-governor:memory-search` | Query items by keyword, category, or status | `/claude-context-governor:memory-search PostgreSQL` or `/claude-context-governor:memory-search --category=decision` |
+| `/claude-context-governor:memory-manage` | Pin, dismiss, revive, or mark items as stale | `/claude-context-governor:memory-manage pin <item-id>` |
 
 ## Memory Categories
 
