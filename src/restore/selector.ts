@@ -1,14 +1,21 @@
 import type Database from "better-sqlite3";
-import type { MemoryItem } from "../types.js";
-import { getActiveItems, getPinnedItems } from "../store/memory-items.js";
+import type { MemoryItem, MemoryItemRow } from "../types.js";
+import { getActiveItems, getPinnedItems, rowToMemoryItem } from "../store/memory-items.js";
 import { scoreItem, type ScoredItem } from "./scorer.js";
 import { getConfig } from "../utils/config.js";
 import { logAudit } from "../audit/logger.js";
 import { incrementRestored } from "../store/sessions.js";
 
+export interface RejectedItemWithReason {
+  item: MemoryItem;
+  conflictDescription: string;
+  conflictSourcePath: string | null;
+}
+
 export interface SelectionResult {
   selected: ScoredItem[];
   skipped: ScoredItem[];
+  rejected: RejectedItemWithReason[];
   totalTokens: number;
   budgetUsed: number;
   budgetTotal: number;
@@ -98,11 +105,41 @@ export function selectForRestore(
     incrementRestored(db, sessionId, selected.length);
   }
 
+  const rejected = getRecentRejectedItems(db, projectDir);
+
   return {
     selected,
     skipped,
+    rejected,
     totalTokens: tokensUsed,
     budgetUsed: tokensUsed,
     budgetTotal: budget,
   };
+}
+
+function getRecentRejectedItems(
+  db: Database.Database,
+  projectDir: string,
+): RejectedItemWithReason[] {
+  const rows = db
+    .prepare(
+      `SELECT mi.*, cr.description as conflict_description, cr.conflict_source_path
+       FROM memory_items mi
+       JOIN conflict_records cr ON cr.memory_item_id = mi.id
+       WHERE mi.project_dir = ? AND mi.status = 'rejected'
+         AND cr.resolution = 'memory-rejected'
+       ORDER BY cr.detected_at DESC`,
+    )
+    .all(projectDir) as Array<
+    MemoryItemRow & {
+      conflict_description: string;
+      conflict_source_path: string | null;
+    }
+  >;
+
+  return rows.map((row) => ({
+    item: rowToMemoryItem(row),
+    conflictDescription: row.conflict_description,
+    conflictSourcePath: row.conflict_source_path,
+  }));
 }

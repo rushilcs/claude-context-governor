@@ -3,9 +3,11 @@ import type { SelectionResult } from "./selector.js";
 
 /**
  * Serialize selected memory items into structured Markdown for context injection.
+ * Includes corrections for rejected items so governed decisions override
+ * Claude's native memory when they conflict.
  */
 export function serializeForContext(result: SelectionResult): string {
-  if (result.selected.length === 0) return "";
+  if (result.selected.length === 0 && result.rejected.length === 0) return "";
 
   const lines: string[] = [];
   lines.push("## Restored Memory (claude-context-governor)");
@@ -34,6 +36,20 @@ export function serializeForContext(result: SelectionResult): string {
 
       parts.push(` (${meta.join(", ")})`);
       lines.push(parts.join(""));
+    }
+    lines.push("");
+  }
+
+  if (result.rejected.length > 0) {
+    lines.push("### Corrections (governance overrides)");
+    lines.push(
+      "The following items were extracted from past conversations but **rejected** because they conflict with project rules (CLAUDE.md / .claude/rules/). " +
+        "If you have other memories that match these, **disregard them** and follow the project rules instead.",
+    );
+    lines.push("");
+    for (const { item, conflictDescription, conflictSourcePath } of result.rejected) {
+      const source = conflictSourcePath ?? "project rules";
+      lines.push(`- **REJECTED**: "${item.content}" — conflicts with ${source}`);
     }
     lines.push("");
   }

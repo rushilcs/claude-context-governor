@@ -2,7 +2,7 @@
 
 **Memory governance for Claude Code** — selective, explainable, conflict-checked memory restoration with full audit trail.
 
-> **Validated**: 61/61 automated tests + [10/10 manual Claude Code scenarios](tests/e2e/evidence/validation-2026-04-05.md) on Claude Code v2.1.78.
+> **Validated**: 63 automated tests + [10/10 manual Claude Code scenarios](tests/e2e/evidence/validation-2026-04-05.md) on Claude Code v2.1.78.
 
 ---
 
@@ -155,6 +155,22 @@ Once the plugin is loaded, these skills are available in any Claude Code session
 
 The plugin hooks into 6 Claude Code lifecycle events. Capture happens automatically when you `/compact` or when auto-compaction fires. Restore happens automatically on every session start. All data stays in a local SQLite database.
 
+## Integration with Existing Setups
+
+The plugin is fully self-contained and designed to coexist with your existing Claude Code configuration.
+
+**No file conflicts.** The plugin never writes to your `CLAUDE.md`, `.claude/settings.json`, or `.claude/rules/`. It only reads them (to detect conflicts with extracted memories).
+
+**Hooks don't collide.** Claude Code merges plugin hooks alongside any user-defined hooks in `.claude/settings.json`. Your existing hooks continue to work exactly as before.
+
+**Skills are namespaced.** All slash commands use the `/claude-context-governor:` prefix, so they won't collide with other plugins or user-defined skills.
+
+**Database is isolated.** All data lives in `~/.claude/plugins/data/claude-context-governor-<hash>/governor.db`, managed entirely by the plugin. Multiple projects share the same DB file, scoped by `project_dir`.
+
+**Works alongside Claude's native memory.** Claude Code has its own flat-file memory system (`~/.claude/projects/.../memory/`). The governor operates independently — it injects governed context via `additionalContext` during `SessionStart`. When a memory item was rejected by the governor (because it conflicts with your `CLAUDE.md`), the restored context includes an explicit **Corrections** section instructing Claude to disregard any conflicting native memories. `CLAUDE.md` always wins.
+
+**Multiple plugins.** You can load multiple plugins simultaneously — each `--plugin-dir` flag adds a separate plugin.
+
 ## Configuration
 
 Works out of the box with sensible defaults. There is no runtime config file yet — to change these, edit `src/utils/config.ts` and rebuild:
@@ -232,7 +248,7 @@ Validated on 2026-04-05, Claude Code v2.1.78, macOS.
 
 | Layer | Tests | Status |
 |-------|-------|--------|
-| Unit tests | 39 | All passing |
+| Unit tests | 41 | All passing |
 | Simulation tests | 15 | All passing |
 | Skill CLI tests | 7 | All passing |
 | **Claude Code E2E** | **10 scenarios** | **All passing** |
@@ -243,7 +259,7 @@ Live validation produced: **77 memory items**, **52 conflict detections**, **639
 
 ```bash
 npm install
-npm run verify    # typecheck + build + test (61/61 from a fresh clone)
+npm run verify    # typecheck + build + test (63 tests from a fresh clone)
 npm test          # build + test
 npm run test:fast # tests only (skip build, for rapid iteration)
 npm run typecheck # TypeScript checking only

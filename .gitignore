@@ -4,5 +4,6 @@ dist/
 *.db-journal
 *.db-wal
 *.db-shm
-spike/results/
 .DS_Store
+debug.log
+.claude/settings.local.json

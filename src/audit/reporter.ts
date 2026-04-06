@@ -101,34 +101,109 @@ export function generateProjectReport(
     }
   }
 
+  const activeItems = items
+    .map(rowToMemoryItem)
+    .filter((i) => i.status === "active");
+
   const lines: string[] = [];
   lines.push("# Memory Governor — Project Report");
   lines.push("");
   lines.push(`**Project**: ${projectDir}`);
   lines.push(`**Generated**: ${new Date().toISOString()}`);
-  lines.push(`**Total items**: ${items.length}`);
+  lines.push(`**Total items**: ${items.length} (${activeItems.length} active)`);
   lines.push(`**Sessions recorded**: ${sessions.length}`);
   lines.push("");
 
+  lines.push("## Active Memory Items");
+  if (activeItems.length > 0) {
+    lines.push("| Category | Content | Confidence | Source | Created |");
+    lines.push("|----------|---------|------------|--------|---------|");
+    for (const item of activeItems) {
+      const content = item.content.length > 60
+        ? item.content.slice(0, 57) + "..."
+        : item.content;
+      const created = item.created_at.split("T")[0];
+      const conf = Math.round(item.confidence * 100) + "%";
+      lines.push(
+        `| ${item.category} | ${content} | ${conf} | ${item.memory_source} | ${created} |`,
+      );
+    }
+  } else {
+    lines.push("_(no active items)_");
+  }
+  lines.push("");
+
   lines.push("## Status Breakdown");
-  for (const [status, count] of Object.entries(statusCounts)) {
-    lines.push(`- ${status}: ${count}`);
+  if (Object.keys(statusCounts).length > 0) {
+    for (const [status, count] of Object.entries(statusCounts)) {
+      lines.push(`- ${status}: ${count}`);
+    }
+  } else {
+    lines.push("_(no items)_");
   }
   lines.push("");
 
   lines.push("## Active Items by Category");
-  for (const [category, count] of Object.entries(categoryCounts)) {
-    lines.push(`- ${category}: ${count}`);
+  if (Object.keys(categoryCounts).length > 0) {
+    for (const [category, count] of Object.entries(categoryCounts)) {
+      lines.push(`- ${category}: ${count}`);
+    }
+  } else {
+    lines.push("_(no active items)_");
   }
   lines.push("");
 
   if (sessions.length > 0) {
     lines.push("## Recent Sessions");
-    for (const s of sessions.slice(0, 5)) {
+    lines.push("| Date | Session | Extracted | Restored | Compactions |");
+    lines.push("|------|---------|-----------|----------|-------------|");
+    for (const s of sessions.slice(0, 10)) {
+      const date = s.started_at.split("T")[0];
+      const shortId = s.session_id.slice(0, 8);
       lines.push(
-        `- ${s.started_at.split("T")[0]} | extracted: ${s.items_extracted} | restored: ${s.items_restored} | compactions: ${s.compaction_count}`,
+        `| ${date} | ${shortId} | ${s.items_extracted} | ${s.items_restored} | ${s.compaction_count} |`,
       );
     }
+  }
+  lines.push("");
+
+  const sessionIds = sessions.map((s) => s.session_id);
+  const auditEntries = sessionIds.length > 0
+    ? (db
+        .prepare(
+          `SELECT ae.*, s.started_at as session_date
+           FROM audit_entries ae
+           JOIN sessions s ON ae.session_id = s.session_id
+           WHERE ae.session_id IN (${sessionIds.map(() => "?").join(",")})
+           ORDER BY ae.timestamp DESC
+           LIMIT 20`,
+        )
+        .all(...sessionIds) as Array<{
+        id: string;
+        session_id: string;
+        timestamp: string;
+        action: string;
+        memory_item_id: string;
+        reason: string;
+        token_cost: number | null;
+        session_date: string;
+      }>)
+    : [];
+
+  lines.push("## Recent Decisions");
+  if (auditEntries.length > 0) {
+    lines.push("| Time | Action | Item | Reason | Tokens |");
+    lines.push("|------|--------|------|--------|--------|");
+    for (const entry of auditEntries) {
+      const time = entry.timestamp.split("T")[1]?.split(".")[0] ?? "";
+      const itemContent = getItemContentPreview(db, entry.memory_item_id);
+      const tokens = entry.token_cost ?? "-";
+      lines.push(
+        `| ${time} | ${entry.action} | ${itemContent} | ${entry.reason} | ${tokens} |`,
+      );
+    }
+  } else {
+    lines.push("_(no audit entries — decisions are recorded during compaction events)_");
   }
   lines.push("");
 
@@ -155,22 +230,25 @@ export function generateProjectReport(
 
   if (conflicts.length > 0) {
     lines.push("## Conflicts Detected");
+    lines.push("| Resolution | Category | Item | Source | Detected |");
+    lines.push("|------------|----------|------|--------|----------|");
     for (const c of conflicts) {
       const preview = c.content
-        ? c.content.length > 60
-          ? c.content.slice(0, 57) + "..."
+        ? c.content.length > 50
+          ? c.content.slice(0, 47) + "..."
           : c.content
         : `[${c.memory_item_id.slice(0, 8)}]`;
+      const source = c.conflict_source_path
+        ? `${c.conflict_source} (${c.conflict_source_path})`
+        : c.conflict_source;
+      const detected = c.detected_at.split("T")[0];
       lines.push(
-        `- **${c.resolution}** [${c.category}] ${preview}`,
-      );
-      lines.push(
-        `  Source: ${c.conflict_source}${c.conflict_source_path ? ` (${c.conflict_source_path})` : ""} — ${c.description}`,
+        `| ${c.resolution} | ${c.category ?? "-"} | ${preview} | ${source} | ${detected} |`,
       );
     }
   } else {
     lines.push("## Conflicts Detected");
-    lines.push("- (none)");
+    lines.push("_(none)_");
   }
 
   return lines.join("\n");

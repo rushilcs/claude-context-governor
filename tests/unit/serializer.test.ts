@@ -48,6 +48,7 @@ describe("serializer", () => {
     const result: SelectionResult = {
       selected: [],
       skipped: [],
+      rejected: [],
       totalTokens: 0,
       budgetUsed: 0,
       budgetTotal: 2000,
@@ -59,6 +60,7 @@ describe("serializer", () => {
     const result: SelectionResult = {
       selected: [makeScoredItem()],
       skipped: [makeScoredItem({ id: "skip-1" })],
+      rejected: [],
       totalTokens: 20,
       budgetUsed: 20,
       budgetTotal: 2000,
@@ -81,6 +83,7 @@ describe("serializer", () => {
         }),
       ],
       skipped: [],
+      rejected: [],
       totalTokens: 40,
       budgetUsed: 40,
       budgetTotal: 2000,
@@ -95,6 +98,7 @@ describe("serializer", () => {
     const result: SelectionResult = {
       selected: [makeScoredItem({ pinned: true })],
       skipped: [],
+      rejected: [],
       totalTokens: 20,
       budgetUsed: 20,
       budgetTotal: 2000,
@@ -108,6 +112,7 @@ describe("serializer", () => {
     const result: SelectionResult = {
       selected: [makeScoredItem({ memory_source: "compact_summary" })],
       skipped: [],
+      rejected: [],
       totalTokens: 20,
       budgetUsed: 20,
       budgetTotal: 2000,
@@ -115,5 +120,53 @@ describe("serializer", () => {
 
     const output = serializeForContext(result);
     expect(output).toContain("source: compact_summary");
+  });
+
+  it("includes corrections section for rejected items", () => {
+    const result: SelectionResult = {
+      selected: [makeScoredItem()],
+      skipped: [],
+      rejected: [
+        {
+          item: {
+            ...makeScoredItem({ content: "Use tabs for indentation", status: "rejected" }).item,
+          },
+          conflictDescription: 'value conflict: "Use tabs" vs "Use 2-space indentation"',
+          conflictSourcePath: "CLAUDE.md",
+        },
+      ],
+      totalTokens: 20,
+      budgetUsed: 20,
+      budgetTotal: 2000,
+    };
+
+    const output = serializeForContext(result);
+    expect(output).toContain("Corrections (governance overrides)");
+    expect(output).toContain("REJECTED");
+    expect(output).toContain("Use tabs for indentation");
+    expect(output).toContain("CLAUDE.md");
+  });
+
+  it("shows corrections even when no items are selected", () => {
+    const result: SelectionResult = {
+      selected: [],
+      skipped: [],
+      rejected: [
+        {
+          item: {
+            ...makeScoredItem({ content: "Use MySQL", status: "rejected" }).item,
+          },
+          conflictDescription: "value conflict",
+          conflictSourcePath: "CLAUDE.md",
+        },
+      ],
+      totalTokens: 0,
+      budgetUsed: 0,
+      budgetTotal: 2000,
+    };
+
+    const output = serializeForContext(result);
+    expect(output).toContain("Corrections (governance overrides)");
+    expect(output).toContain("Use MySQL");
   });
 });
