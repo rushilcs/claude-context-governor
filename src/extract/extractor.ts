@@ -106,30 +106,95 @@ export function extractMemories(
   return result;
 }
 
+const MAX_SEGMENT_LENGTH = 300;
+const MIN_SEGMENT_LENGTH = 20;
+
+const META_SECTION_PATTERNS = [
+  /^\d+\.\s*(?:all )?user messages/i,
+  /^\d+\.\s*pending tasks/i,
+  /^\d+\.\s*current work/i,
+  /^\d+\.\s*optional next step/i,
+  /^\d+\.\s*errors and fixes/i,
+  /^if you need specific details/i,
+  /^read the full transcript at/i,
+  /^summary:/i,
+];
+
 /**
  * Segment text into candidate chunks for classification.
- * Uses sentence boundaries (period, exclamation, question mark) and paragraph breaks.
- * Groups 2-3 sentences together for context.
+ * Handles both conversational text and structured compact summaries.
  */
-function segmentText(text: string): string[] {
-  const paragraphs = text.split(/\n{2,}/).filter((p) => p.trim().length > 0);
+export function segmentText(text: string): string[] {
+  let cleaned = text
+    .replace(/<\/?summary>/gi, "")
+    .replace(/<\/?compact_summary>/gi, "")
+    .trim();
+
+  const lines = splitIntoLines(cleaned);
   const segments: string[] = [];
 
-  for (const paragraph of paragraphs) {
-    const sentences = paragraph
-      .split(/(?<=[.!?])\s+/)
-      .filter((s) => s.trim().length > 10);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.length < MIN_SEGMENT_LENGTH) continue;
+    if (trimmed.length > MAX_SEGMENT_LENGTH) continue;
+    if (isMetaContent(trimmed)) continue;
 
-    if (sentences.length <= 3) {
-      segments.push(paragraph.trim());
-    } else {
-      // Sliding window of 2-3 sentences
-      for (let i = 0; i < sentences.length; i += 2) {
-        const window = sentences.slice(i, i + 3).join(" ");
-        segments.push(window.trim());
+    segments.push(trimmed);
+  }
+
+  return segments;
+}
+
+function splitIntoLines(text: string): string[] {
+  const lines: string[] = [];
+
+  const blocks = text.split(/\n{2,}/);
+
+  for (const block of blocks) {
+    const trimmed = block.trim();
+    if (!trimmed) continue;
+
+    const structuredLines = trimmed.split(
+      /\n(?=\s*[-*]\s|\s*\d+\.\s|#{1,4}\s)/,
+    );
+
+    for (const line of structuredLines) {
+      const stripped = line
+        .replace(/^\s*[-*]\s+/, "")
+        .replace(/^\s*\d+\.\s+/, "")
+        .replace(/^#{1,4}\s+/, "")
+        .replace(/^\*\*.*?\*\*:\s*/, "")
+        .trim();
+
+      if (!stripped) continue;
+
+      const sentences = stripped
+        .split(/(?<=[.!?])\s+/)
+        .filter((s) => s.trim().length > 10);
+
+      if (sentences.length <= 2 || stripped.length <= MAX_SEGMENT_LENGTH) {
+        lines.push(stripped);
+      } else {
+        for (let i = 0; i < sentences.length; i += 2) {
+          const window = sentences.slice(i, i + 2).join(" ");
+          lines.push(window.trim());
+        }
       }
     }
   }
 
-  return segments.filter((s) => s.length > 20);
+  return lines;
+}
+
+function isMetaContent(text: string): boolean {
+  for (const pattern of META_SECTION_PATTERNS) {
+    if (pattern.test(text)) return true;
+  }
+
+  if (/^\[.*\]\(.*\)/.test(text)) return true;
+
+  const codeBlockCount = (text.match(/```/g) || []).length;
+  if (codeBlockCount >= 2) return true;
+
+  return false;
 }

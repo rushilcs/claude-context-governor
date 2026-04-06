@@ -145,4 +145,79 @@ describe("extractor", () => {
 
     expect(result.items.length).toBe(0);
   });
+
+  it("extracts discrete facts from structured compact summaries", () => {
+    const compactSummary = `<summary>
+1. Primary Request and Intent:
+   - User asked about database options and architecture decisions.
+
+2. Key Technical Concepts:
+   - We decided to use PostgreSQL for the main database.
+   - The convention is to use kebab-case for API endpoints.
+   - The webhook race condition was fixed by adding a mutex lock.
+
+3. Files and Code Sections:
+   - src/db.ts — database connection setup
+   - src/api/routes.ts — endpoint definitions
+
+4. All user messages:
+   - "What database should we use?"
+   - "Fix the webhook bug"
+</summary>`;
+
+    const result = extractMemories(
+      db,
+      compactSummary,
+      "compact_summary",
+      "test-session",
+      "/test/project",
+    );
+
+    for (const item of result.items) {
+      expect(item.content.length).toBeLessThanOrEqual(300);
+    }
+
+    const contents = result.items.map((i) => i.content);
+    expect(contents.some((c) => c.includes("PostgreSQL"))).toBe(true);
+  });
+
+  it("rejects oversized compact summary blocks as single items", () => {
+    const bloatedSummary =
+      "We decided to use PostgreSQL. " +
+      "The reason was that after a very long and detailed evaluation process spanning multiple weeks of careful analysis and benchmarking " +
+      "of various database systems including MySQL, MariaDB, CockroachDB, MongoDB, and several others, the team concluded that " +
+      "PostgreSQL provides the best combination of JSONB support, full-text search capabilities, strong ACID compliance, " +
+      "excellent community support, and mature tooling ecosystem for the specific requirements of this microservices platform.";
+
+    const result = extractMemories(
+      db,
+      bloatedSummary,
+      "compact_summary",
+      "test-session",
+      "/test/project",
+    );
+
+    for (const item of result.items) {
+      expect(item.content.length).toBeLessThanOrEqual(300);
+    }
+  });
+
+  it("filters out meta-content from compact summaries", () => {
+    const text = `1. All user messages:
+   - "What database should we use?"
+   - "Fix the webhook bug"
+
+2. Pending tasks:
+   - None remaining.`;
+
+    const result = extractMemories(
+      db,
+      text,
+      "compact_summary",
+      "test-session",
+      "/test/project",
+    );
+
+    expect(result.items.length).toBe(0);
+  });
 });

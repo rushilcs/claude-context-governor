@@ -1,5 +1,9 @@
 # claude-context-governor
 
+> This file is for **plugin development** — people working on the governor codebase itself.
+> End users loading the plugin via `claude --plugin-dir` don't need this file; the plugin reads
+> your project's own CLAUDE.md and .claude/rules/ for conflict detection.
+
 ## Code style
 - Use 2-space indentation (TypeScript/JSON)
 - ESM only (`"type": "module"` in package.json)

@@ -8,14 +8,18 @@ export interface ClassificationResult {
   matchedPattern: string;
 }
 
+const MAX_CLASSIFIABLE_LENGTH = 300;
+
 /**
  * Classify a text segment into a memory category based on pattern matching.
- * Returns null if no pattern matches.
+ * Returns null if no pattern matches or if the segment is too long to be a discrete fact.
  */
 export function classify(
   text: string,
   source: MemorySource,
 ): ClassificationResult | null {
+  if (text.length > MAX_CLASSIFIABLE_LENGTH) return null;
+
   const config = getConfig();
   const patterns = getEnabledPatterns(config.experimentalCategories);
 

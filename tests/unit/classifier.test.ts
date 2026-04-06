@@ -76,4 +76,15 @@ describe("classifier", () => {
     expect(result).not.toBeNull();
     expect(result!.confidence).toBe(1.0);
   });
+
+  it("rejects segments longer than 300 characters", () => {
+    const longText =
+      "We decided to use PostgreSQL for the main database. " +
+      "This was after a long evaluation of many different database options including MySQL, MariaDB, CockroachDB, and others. " +
+      "We considered factors like JSON support, full-text search, replication, and community support. " +
+      "In the end PostgreSQL was chosen because it provides the best combination of features for our specific use case requirements and constraints.";
+    expect(longText.length).toBeGreaterThan(300);
+    const result = classify(longText, "transcript");
+    expect(result).toBeNull();
+  });
 });
