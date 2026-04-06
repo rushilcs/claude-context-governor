@@ -1,0 +1,64 @@
+=== SessionStart fired at 2026-04-05T21:36:37Z ===
+session_id:      5545bd74-d97d-4e1d-85f5-24e8011ba6aa
+cwd:             /Users/rushilcs/Documents/projects/claude-memory-governance
+source:          startup
+hook_event_name: SessionStart
+---
+All fields received:
+[
+  "cwd",
+  "hook_event_name",
+  "model",
+  "session_id",
+  "source",
+  "transcript_path"
+]
+
+=== SessionStart fired at 2026-04-05T21:37:50Z ===
+session_id:      5545bd74-d97d-4e1d-85f5-24e8011ba6aa
+cwd:             /Users/rushilcs/Documents/projects/claude-memory-governance
+source:          compact
+hook_event_name: SessionStart
+---
+All fields received:
+[
+  "cwd",
+  "hook_event_name",
+  "model",
+  "session_id",
+  "source",
+  "transcript_path"
+]
+
+=== SessionStart fired at 2026-04-05T21:39:33Z ===
+session_id:      b23d434c-1b0b-4367-8f13-eaa48d5ad198
+cwd:             /Users/rushilcs/Documents/projects/claude-memory-governance
+source:          startup
+hook_event_name: SessionStart
+---
+All fields received:
+[
+  "cwd",
+  "hook_event_name",
+  "model",
+  "session_id",
+  "source",
+  "transcript_path"
+]
+
+=== SessionStart fired at 2026-04-05T21:42:09Z ===
+session_id:      6d7da654-c2af-4460-96f7-ebc027874018
+cwd:             /Users/rushilcs/Documents/projects/claude-memory-governance
+source:          startup
+hook_event_name: SessionStart
+---
+All fields received:
+[
+  "cwd",
+  "hook_event_name",
+  "model",
+  "session_id",
+  "source",
+  "transcript_path"
+]
+

@@ -177,7 +177,7 @@ function computeKeywordOverlap(a: string[], b: string[]): number {
 }
 
 const VALUE_PAIRS: Array<[RegExp, RegExp]> = [
-  [/\btabs\b/i, /\bspaces\b/i],
+  [/\btabs?\b/i, /\bspaces?\b/i],
   [/\bsql\b/i, /\borm\b/i],
   [/\bmysql\b/i, /\bpostgres(?:ql)?\b/i],
   [/\bmonorepo\b/i, /\bsingle[- ]?(?:package|repo)\b/i],

@@ -1,0 +1,19 @@
+=== InstructionsLoaded fired at 2026-04-05T21:41:39Z ===
+session_id:      b23d434c-1b0b-4367-8f13-eaa48d5ad198
+hook_event_name: InstructionsLoaded
+file_path:       /Users/rushilcs/Documents/projects/claude-memory-governance/spike/CLAUDE.md
+memory_type:     Project
+load_reason:     nested_traversal
+---
+All fields received:
+[
+  "cwd",
+  "file_path",
+  "hook_event_name",
+  "load_reason",
+  "memory_type",
+  "session_id",
+  "transcript_path",
+  "trigger_file_path"
+]
+

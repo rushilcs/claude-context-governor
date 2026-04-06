@@ -67,6 +67,27 @@ describe("conflict detector", () => {
     expect(result.rejected).toBe(true);
   });
 
+  it("detects value conflict: tabs vs '2-space indentation' (singular, no negation)", () => {
+    const item = makeItem({ content: "Use tabs for indentation" });
+    insertMemoryItem(db, item);
+
+    const fragments = parseInstructionText(
+      "Use 2-space indentation (TypeScript/JSON)",
+      "/project/CLAUDE.md",
+      "claude-md",
+    );
+
+    const result = checkConflictsAgainstFragments(
+      db,
+      item,
+      "test-session",
+      fragments,
+    );
+
+    expect(result.conflicts.length).toBeGreaterThan(0);
+    expect(result.rejected).toBe(true);
+  });
+
   it("detects value conflict: MySQL vs PostgreSQL", () => {
     const item = makeItem({
       category: "decision",

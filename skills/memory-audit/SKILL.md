@@ -12,6 +12,8 @@ node ${CLAUDE_PLUGIN_ROOT}/dist/skills/memory-audit.js [session-id]
 
 **Display the full output to the user exactly as printed.** The output is pre-formatted markdown with tables — do not summarize, paraphrase, or reformat it. Show it verbatim.
 
+**Important**: The user must use the full command `/claude-context-governor:memory-audit`, not just `/memory-audit`.
+
 If no session ID is provided, it generates a project-wide report with:
 - Active memory items table (ID, category, content, rationale, confidence)
 - Recent sessions table

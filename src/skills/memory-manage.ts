@@ -14,8 +14,10 @@ function main() {
   const itemId = process.argv[3];
 
   if (!action || !itemId) {
-    console.log("Usage: memory-manage <action> <item-id>");
+    console.log("Usage: /claude-context-governor:memory-manage <action> <item-id>");
     console.log("Actions: pin, dismiss, revive, stale");
+    console.log("");
+    console.log("Note: Use the full command with the plugin prefix.");
     process.exit(1);
   }
 
