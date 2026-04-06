@@ -116,16 +116,20 @@ export function generateProjectReport(
 
   lines.push("## Active Memory Items");
   if (activeItems.length > 0) {
-    lines.push("| Category | Content | Confidence | Source | Created |");
-    lines.push("|----------|---------|------------|--------|---------|");
+    lines.push("| ID | Category | Content | Rationale | Confidence | Created |");
+    lines.push("|----|----------|---------|-----------|------------|---------|");
     for (const item of activeItems) {
+      const shortId = item.id.slice(0, 8);
       const content = item.content.length > 60
         ? item.content.slice(0, 57) + "..."
         : item.content;
+      const rationale = item.rationale.length > 50
+        ? item.rationale.slice(0, 47) + "..."
+        : item.rationale;
       const created = item.created_at.split("T")[0];
       const conf = Math.round(item.confidence * 100) + "%";
       lines.push(
-        `| ${item.category} | ${content} | ${conf} | ${item.memory_source} | ${created} |`,
+        `| ${shortId} | ${item.category} | ${content} | ${rationale} | ${conf} | ${created} |`,
       );
     }
   } else {
